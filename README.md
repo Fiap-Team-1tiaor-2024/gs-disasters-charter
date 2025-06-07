@@ -2,6 +2,8 @@
 
 ## Análise e Monitoramento de Eventos Pluviais Extremos em São Paulo: Um Sistema de Alerta Baseado em Dados e Imagens de Satélite  
 
+
+
 Integrantes do Grupo:  
 Gabriela da Cunha Rocha — RM561041  
 Gustavo Segantini Rossignolli — RM560111  
@@ -14,13 +16,18 @@ Curso: Inteligência Artificial
 Instituição: FIAP
 Data: 06/06/2025
 
+[Link do GitHub](https://github.com/Fiap-Team-1tiaor-2024/gs-disasters-charter)
+
 ### 1. Introdução  
 #### 1.1. Contextualização  
 Nos últimos anos, a intensificação dos eventos climáticos extremos tornou-se uma das maiores preocupações globais. Enchentes, secas prolongadas e deslizamentos de terra, impulsionados pelas mudanças climáticas, têm impactado comunidades com frequência e severidade crescentes. O estado de São Paulo, em particular, possui um histórico de desastres naturais associados a chuvas intensas, especialmente em áreas de serra e regiões litorâneas, resultando em perdas humanas e materiais significativas. Este cenário demanda respostas rápidas, inteligentes e tecnológicas para o monitoramento e mitigação de riscos. 
+
 #### 1.2. Desafio da Global Solution  
 Alinhada a essa necessidade, a FIAP propôs para a Global Solution 2025.1 o desafio de desenvolver uma solução digital baseada em dados reais, capaz de prever, monitorar ou mitigar os impactos de eventos naturais extremos. A proposta incentiva a aplicação integrada de conhecimentos em lógica computacional, programação em Python e estruturação de dados, utilizando como base as informações de desastres disponibilizadas por agências globais através do site disasterscharter.org.  
+
 #### 1.3. Problema Específico Abordado  
 Nosso grupo escolheu focar no monitoramento de chuvas intensas e na identificação de períodos de alto risco para deslizamentos e enchentes no estado de São Paulo. A escolha foi motivada pela alta relevância do problema para a nossa região e pela disponibilidade de dados abertos de alta qualidade, incluindo registros de estações meteorológicas do Instituto Nacional de Meteorologia (INMET) e imagens de satélite de desastres reais, como o trágico evento ocorrido em São Sebastião em fevereiro de 2023.  
+
 #### 1.4. Objetivos do Projeto  
 O objetivo geral deste projeto foi desenvolver um sistema em Python para analisar dados históricos de precipitação, identificar períodos críticos, gerar alerta baseados em limiares configuráveis e correlacionar esses eventos com evidências visuais (imagens de satélite), culminando em uma ferramenta robusta para análise e visualização de eventos extremos.
 
@@ -38,7 +45,7 @@ Gerar relatórios textuais automatizados para eventos críticos específicos.
 A solução foi arquitetada como um pipeline de processamento de dados sequencial e modular, implementado em Python. Cada módulo é responsável por uma etapa específica do processo, desde a ingestão dos dados brutos até a geração dos outputs finais (relatórios e visualizações).
 
 Diagrama de Fluxo Conceitual:
-
+![diagrama](/images/diagrama.png)
 
 Os principais módulos são:
 Carregamento de Dados: Lê e pré-processa os dados brutos do arquivo CSV.
@@ -50,6 +57,7 @@ Geração de Outputs: Cria os relatórios, gráficos e mapas interativos.
 #### 2.2. Fontes de Dados
 Dados de Precipitação: Utilizamos um conjunto de dados do INMET contendo 4.632.374 registros de medições horárias de estações meteorológicas automáticas em São Paulo. As colunas essenciais para o projeto foram data, hora, precipitacao_total, estacao, municipio, latitude e longitude.
 Imagens de Satélite: Foram utilizadas 15 imagens de alta resolução do portal disasterscharter.org, focadas no desastre de São Sebastião em fevereiro de 2023, além de outros eventos no estado. Essas imagens serviram como “verdade em campo” para validar a eficácia do nosso sistema de alerta.
+
 #### 2.3. Ferramentas e Justificativas
 A solução foi inteiramente desenvolvida em Python 3, devido à sua versatilidade e ao seu ecossistema maduro para análise de dados. As seguintes bibliotecas foram cruciais:
 Pandas: Essencial para a manipulação, limpeza e análise dos mais de 4,6 milhões de registros de chuva, permitindo cálculos eficientes de séries temporais e agregações.
@@ -65,6 +73,7 @@ Lógica de Geração de Alerta:
 O coração do sistema reside na função gerar_alertas_precipitacao. Após o cálculo dos acumulados de chuva para cada estação, esta função itera sobre cada registro horário e o compara com uma lista de limiares pré-definidos (MEUS_LIMIARES_DE_ALERTA).
 
 Lógica de Correlação de Imagem Relevante:
+
 ~~~python
 for limiar in limiares:
            coluna_gatilho = limiar['coluna_acumulado']
@@ -123,12 +132,13 @@ O foco da nossa análise de resultados foi o evento extremo que atingiu o litora
 Data do Evento: 19/02/2023
 Neste dia, o sistema registrou 144 alerta, dos quais 25 foram de Nível Máximo. A estação de Bertioga, geograficamente próxima e climaticamente similar a São Sebastião, foi o epicentro dos alertas, registrando um alarmante acumulado de chuva em 24 horas de 292,6 mm, quase o triplo do limiar de risco alto (100 mm).
 
-
+![analise](/images/analise.png)
 Legenda da Figura 2: O gráfico ilustra a evolução da precipitação horária (barras azuis) e acumulada em 24h (linha vermelha) para a estação de Bertioga. É visível o rápido aumento do acumulado, ultrapassando os limiares de ATENÇÃO (amarelo), ALERTA (laranja) e ALERTA MÁXIMO (vermelho) durante os dias 18 e 19, coincidindo com a data da imagem de satélite do desastre.
 
 Data do Evento: 20/02/2023
 A situação crítica persistiu. Neste dia, foram 65 alerta, com a estação de Bertioga ainda reportando um acumulado em 24h de 156,8 mm e um acumulado em 72h de impressionantes 295,4 mm, indicando um solo completamente saturado e altíssimo risco de deslizamentos. O mapa de alerta gerado para esta data mostra claramente a concentração e a severidade dos alertas na região litorânea.
 
+![mapa](/images/mapa.png)
 Legenda da Figura 3: Mapa geoespacial dos alertas gerados em 20/02/2023. O marcador vermelho sobre Bertioga indica “ALERTA MÁXIMO” O popup interativo mostra os detalhes dos alertas e a miniatura da imagem de satélite correspondente, provando a correlação direta entre os dados de chuva e a evidência visual do desastre.
 
 A forte correlação entre os alertas de nível máximo gerados pelo sistema para a estação de Bertioga e o desastre documentado pelas imagens de São Sebastião valida a eficácia dos limiares e da metodologia empregada.
