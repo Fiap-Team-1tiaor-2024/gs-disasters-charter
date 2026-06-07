@@ -19,6 +19,7 @@ from pipeline.reporter import (
     obter_nomes_imagens,
     extrair_data_de_nome_arquivo,
 )
+from pipeline.utils import to_pandas
 
 __all__ = [
     "load_and_preprocess",
@@ -38,4 +39,5 @@ __all__ = [
     "gerar_relatorio_para_imagem",
     "obter_nomes_imagens",
     "extrair_data_de_nome_arquivo",
+    "to_pandas",
 ]

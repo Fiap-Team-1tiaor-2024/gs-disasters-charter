@@ -1,20 +1,22 @@
+import os
+
 import streamlit as st
 import pandas as pd
 
 from pipeline.loader import load_and_preprocess
 from pipeline.accumulator import calculate_accumulations
 from pipeline.alerts import calculate_irc, CORES_RISCO
+from pipeline.utils import to_pandas
 from components.chart_builder import plot_risk_distribution, plot_risk_stations
-
-import os
 
 DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp.csv")
 
 
 def _load_pipeline():
-    df = load_and_preprocess(DATA_PATH)
-    df = calculate_accumulations(df)
-    df = calculate_irc(df)
+    df_pl = load_and_preprocess(DATA_PATH)
+    df_pl = calculate_accumulations(df_pl)
+    df_pl = calculate_irc(df_pl)
+    df = to_pandas(df_pl)
     return df
 
 

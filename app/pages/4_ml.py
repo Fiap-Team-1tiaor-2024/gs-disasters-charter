@@ -9,6 +9,7 @@ import pandas as pd
 from pipeline.loader import load_and_preprocess
 from pipeline.accumulator import calculate_accumulations
 from pipeline.alerts import calculate_irc, calculate_historical_percentiles, CORES_RISCO
+from pipeline.utils import to_pandas
 from ml.model_interface import load_model, build_features, predict_risk, get_model_info, get_feature_importance
 
 
@@ -17,10 +18,13 @@ MODEL_PATH = os.environ.get("MODEL_PATH", "")
 
 
 def _load_pipeline():
-    df = load_and_preprocess(DATA_PATH)
-    df = calculate_accumulations(df)
-    df = calculate_irc(df)
-    return df
+    df_pl = load_and_preprocess(DATA_PATH)
+    df_pl = calculate_accumulations(df_pl)
+    df_pl = calculate_irc(df_pl)
+    pct_pl = calculate_historical_percentiles(df_pl)
+    df = to_pandas(df_pl)
+    pct = pct_pl.to_pandas()
+    return df, pct
 
 
 st.header("🤖 Modelo ML")
@@ -51,13 +55,11 @@ st.divider()
 
 try:
     with st.spinner("Carregando dados e gerando predicoes..."):
-        df = _load_pipeline()
+        df, pct = _load_pipeline()
 
     if df.empty:
         st.warning("O dataset esta vazio apos o preprocessamento.")
         st.stop()
-
-    pct = calculate_historical_percentiles(df)
 
     features = build_features(df)
     predictions = predict_risk(model, features, df_original=df)

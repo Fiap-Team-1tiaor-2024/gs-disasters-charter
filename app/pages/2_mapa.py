@@ -7,6 +7,7 @@ from streamlit_folium import st_folium
 from pipeline.loader import load_and_preprocess
 from pipeline.accumulator import calculate_accumulations
 from pipeline.alerts import calculate_irc, NIVEIS_RISCO
+from pipeline.utils import to_pandas
 from components.map_builder import build_risk_map
 
 
@@ -14,9 +15,10 @@ DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp.csv")
 
 
 def _load_pipeline():
-    df = load_and_preprocess(DATA_PATH)
-    df = calculate_accumulations(df)
-    df = calculate_irc(df)
+    df_pl = load_and_preprocess(DATA_PATH)
+    df_pl = calculate_accumulations(df_pl)
+    df_pl = calculate_irc(df_pl)
+    df = to_pandas(df_pl)
     return df
 
 

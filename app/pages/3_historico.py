@@ -6,6 +6,7 @@ import pandas as pd
 from pipeline.loader import load_and_preprocess
 from pipeline.accumulator import calculate_accumulations
 from pipeline.alerts import calculate_irc, calculate_historical_percentiles, CORES_RISCO
+from pipeline.utils import to_pandas
 from components.chart_builder import plot_accumulation_timeseries, plot_accumulation_histogram
 
 
@@ -20,10 +21,12 @@ JANELAS_LABELS = {
 
 
 def _load_pipeline():
-    df = load_and_preprocess(DATA_PATH)
-    df = calculate_accumulations(df)
-    df = calculate_irc(df)
-    pct = calculate_historical_percentiles(df)
+    df_pl = load_and_preprocess(DATA_PATH)
+    df_pl = calculate_accumulations(df_pl)
+    df_pl = calculate_irc(df_pl)
+    pct_pl = calculate_historical_percentiles(df_pl)
+    df = to_pandas(df_pl)
+    pct = pct_pl.to_pandas()
     return df, pct
 
 

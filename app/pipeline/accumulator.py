@@ -1,7 +1,7 @@
 import time
 from typing import List, Optional
 
-import pandas as pd
+import polars as pl
 import streamlit as st
 
 
@@ -10,21 +10,25 @@ JANELAS_PADRAO = [1, 6, 24, 72]
 
 @st.cache_data(show_spinner="Calculando acumulados de precipitacao...")
 def calculate_accumulations(
-    df: pd.DataFrame,
+    df: pl.DataFrame,
     janelas_horas: Optional[List[int]] = None,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """Calcula acumulados de precipitacao em janelas temporais por estacao.
 
-    Tempo estimado: ~30-60s para ~4.6M registros com 4 janelas.
-    Carregamentos subsequentes usam cache do Streamlit.
+    Usa Polars rolling_sum com over("estacao") para garantir que nao
+    ha vazamento de dados entre estacoes diferentes.
+
+    O DataFrame deve estar ordenado por timestamp antes desta chamada.
+    A funcao ordena por (estacao, timestamp) internamente para o rolling,
+    e restaura a ordenacao por timestamp ao final.
 
     Args:
-        df: DataFrame com colunas 'precipitacao' e 'estacao', indexado por timestamp.
+        df: pl.DataFrame com colunas 'precipitacao', 'estacao' e 'timestamp'.
         janelas_horas: Lista de tamanhos de janela em horas. Padrao: [1, 6, 24, 72].
 
     Returns:
-        DataFrame com colunas adicionais de acumulado (precip_acc_1h, precip_acc_6h,
-        precip_acc_24h, precip_acc_72h).
+        pl.DataFrame com colunas adicionais de acumulado
+        (precip_acc_1h, precip_acc_6h, precip_acc_24h, precip_acc_72h).
     """
     inicio = time.time()
 
@@ -36,23 +40,21 @@ def calculate_accumulations(
     if missing:
         raise ValueError(f"Colunas obrigatorias ausentes: {missing}")
 
-    if not isinstance(df.index, pd.DatetimeIndex):
-        raise ValueError("O indice do DataFrame precisa ser um DatetimeIndex")
+    df = df.sort(["estacao", "timestamp"])
 
-    df = df.copy()
-    df = df.sort_values(by=["estacao", df.index.name or "timestamp"])
-
+    new_cols = []
     for janela in janelas_horas:
         col_nome = f"precip_acc_{janela}h"
-        df[col_nome] = (
-            df.groupby("estacao", observed=True)["precipitacao"]
-            .rolling(window=janela, min_periods=1)
-            .sum()
-            .reset_index(level=0, drop=True)
+        new_cols.append(
+            pl.col("precipitacao")
+            .rolling_sum(window_size=janela, min_periods=1)
+            .over("estacao")
+            .cast(pl.Float32)
+            .alias(col_nome)
         )
-        df[col_nome] = df[col_nome].astype("float32")
 
-    df = df.sort_index()
+    df = df.with_columns(new_cols)
+    df = df.sort("timestamp")
 
     elapsed = time.time() - inicio
     print(f"[accumulator] Acumulados calculados em {elapsed:.1f}s para janelas {janelas_horas}")

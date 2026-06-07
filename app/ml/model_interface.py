@@ -2,6 +2,7 @@ import os
 from typing import Any, Optional
 
 import pandas as pd
+import polars as pl
 
 
 def load_model(model_path: str) -> Optional[Any]:
@@ -45,8 +46,20 @@ def load_model(model_path: str) -> Optional[Any]:
         return None
 
 
-def build_features(df: pd.DataFrame, df_sensor: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+def _to_pandas(df):
+    """Converte pl.DataFrame ou pd.DataFrame para pd.DataFrame."""
+    if isinstance(df, pl.DataFrame):
+        if "timestamp" in df.columns:
+            return df.to_pandas().set_index("timestamp").sort_index()
+        return df.to_pandas()
+    return df
+
+
+def build_features(df, df_sensor=None):
     """Prepara features a partir do pipeline para o modelo de ML.
+
+    Aceita pl.DataFrame ou pd.DataFrame e converte internamente para pandas,
+    pois modelos sklearn esperam pd.DataFrame como entrada.
 
     Features geradas:
     - Acumulados de precipitacao (1h, 6h, 24h, 72h)
@@ -56,44 +69,47 @@ def build_features(df: pd.DataFrame, df_sensor: Optional[pd.DataFrame] = None) -
     - Dados do sensor (se disponiveis): temperatura, umidade, nivel_chuva
 
     Args:
-        df: DataFrame do pipeline com acumulados, scores e IRC.
+        df: DataFrame (pl.DataFrame ou pd.DataFrame) com acumulados, scores e IRC.
         df_sensor: DataFrame do sensor ESP32 (opcional).
 
     Returns:
-        DataFrame com features prontas para o modelo.
+        pd.DataFrame com features prontas para o modelo.
     """
+    df_pd = _to_pandas(df)
+
     feature_cols = []
 
     colunas_acum = ["precip_acc_1h", "precip_acc_6h", "precip_acc_24h", "precip_acc_72h"]
     for col in colunas_acum:
-        if col in df.columns:
+        if col in df_pd.columns:
             feature_cols.append(col)
 
     score_cols = ["score_1h", "score_6h", "score_24h", "score_72h"]
     for col in score_cols:
-        if col in df.columns:
+        if col in df_pd.columns:
             feature_cols.append(col)
 
-    if "irc" in df.columns:
+    if "irc" in df_pd.columns:
         feature_cols.append("irc")
 
-    if "mes" in df.columns:
+    if "mes" in df_pd.columns:
         feature_cols.append("mes")
-    if "hora" in df.columns:
+    if "hora" in df_pd.columns:
         feature_cols.append("hora")
 
-    if "precipitacao" in df.columns:
+    if "precipitacao" in df_pd.columns:
         feature_cols.append("precipitacao")
 
-    features = df[feature_cols].copy()
+    features = df_pd[feature_cols].copy()
 
     if df_sensor is not None and not df_sensor.empty:
+        df_sensor_pd = _to_pandas(df_sensor) if isinstance(df_sensor, pl.DataFrame) else df_sensor
         sensor_features = {
-            "sensor_temperatura": df_sensor["temperatura"].mean(),
-            "sensor_umidade": df_sensor["umidade"].mean(),
-            "sensor_nivel_chuva_pct": df_sensor["nivel_chuva_pct"].mean()
-            if "nivel_chuva_pct" in df_sensor.columns
-            else df_sensor["nivel_chuva"].mean(),
+            "sensor_temperatura": df_sensor_pd["temperatura"].mean(),
+            "sensor_umidade": df_sensor_pd["umidade"].mean(),
+            "sensor_nivel_chuva_pct": df_sensor_pd["nivel_chuva_pct"].mean()
+            if "nivel_chuva_pct" in df_sensor_pd.columns
+            else df_sensor_pd["nivel_chuva"].mean(),
         }
         for col, val in sensor_features.items():
             features[col] = val
@@ -104,37 +120,36 @@ def build_features(df: pd.DataFrame, df_sensor: Optional[pd.DataFrame] = None) -
 def predict_risk(
     model: Optional[Any],
     features: pd.DataFrame,
-    df_original: Optional[pd.DataFrame] = None,
+    df_original=None,
 ) -> pd.DataFrame:
     """Executa predicao de risco usando o modelo de ML.
 
     Se o modelo nao estiver disponivel (None), retorna DataFrame com
     aviso "Modelo nao carregado" em modo stub.
 
-    O contrato esperado de saida e um DataFrame com colunas:
-    - estacao: nome da estacao
-    - timestamp: data/hora da predicao
-    - risco_predito: nivel de risco predito
-    - probabilidade: confianca da predicao (0-1)
-
     Args:
         model: Modelo de ML carregado (ou None para stub).
         features: DataFrame com features preparadas por build_features.
         df_original: DataFrame original com colunas estacao e timestamp
-            para enriquecer a saida.
+            para enriquecer a saida. Aceita pl.DataFrame ou pd.DataFrame.
 
     Returns:
-        DataFrame com colunas: estacao, timestamp, risco_predito, probabilidade.
+        pd.DataFrame com colunas: estacao, timestamp, risco_predito, probabilidade.
     """
     resultado_vazio = pd.DataFrame(
         columns=["estacao", "timestamp", "risco_predito", "probabilidade"]
     )
 
+    if df_original is not None:
+        df_original_pd = _to_pandas(df_original)
+    else:
+        df_original_pd = None
+
     if model is None:
         print("[ml] Modelo nao carregado — retornando predicoes stub")
 
-        if df_original is not None and "irc" in df_original.columns:
-            df_original_str = df_original.copy()
+        if df_original_pd is not None and "irc" in df_original_pd.columns:
+            df_original_str = df_original_pd.copy()
             df_original_str["nivel_risco"] = df_original_str["nivel_risco"].astype(str) if "nivel_risco" in df_original_str.columns else "Normal"
 
             ranking = (
@@ -147,7 +162,7 @@ def predict_risk(
 
             ranking["risco_predito"] = "Modelo nao carregado"
             ranking["probabilidade"] = float("nan")
-            ranking["timestamp"] = df_original.index.max() if isinstance(df_original.index, pd.DatetimeIndex) else pd.NaT
+            ranking["timestamp"] = df_original_pd.index.max() if isinstance(df_original_pd.index, pd.DatetimeIndex) else pd.NaT
 
             return ranking[["estacao", "timestamp", "risco_predito", "probabilidade"]]
 
@@ -164,9 +179,9 @@ def predict_risk(
         else:
             resultado["probabilidade"] = float("nan")
 
-        if df_original is not None:
-            resultado["estacao"] = df_original["estacao"].values[:len(resultado)]
-            resultado["timestamp"] = df_original.index[:len(resultado)]
+        if df_original_pd is not None:
+            resultado["estacao"] = df_original_pd["estacao"].values[:len(resultado)]
+            resultado["timestamp"] = df_original_pd.index[:len(resultado)]
         else:
             resultado["estacao"] = "Desconhecida"
             resultado["timestamp"] = pd.NaT

@@ -1,5 +1,6 @@
 streamlit
 pandas
+polars
 matplotlib
 folium
 streamlit-folium
