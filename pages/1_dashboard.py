@@ -3,9 +3,8 @@ import pandas as pd
 
 from pipeline.loader import load_and_preprocess
 from pipeline.accumulator import calculate_accumulations
-from pipeline.alerts import calculate_irc, CORES_RISCO, NIVEIS_RISCO
+from pipeline.alerts import calculate_irc, CORES_RISCO
 from components.chart_builder import plot_risk_distribution, plot_risk_stations
-
 
 import os
 
@@ -20,12 +19,17 @@ def _load_pipeline():
 
 
 st.header("🏠 Dashboard")
+st.caption("Resumo de alertas ativos, IRC por estacao e distribuicao de risco.")
 
 try:
-    with st.spinner("Carregando dados..."):
+    with st.spinner("Carregando dados meteorologicos..."):
         df = _load_pipeline()
 
-    st.success(f"Dados carregados: {len(df):,} registros")
+    if df.empty:
+        st.warning("O dataset esta vazio apos o preprocessamento.")
+        st.stop()
+
+    st.success(f"Dados carregados: {len(df):,} registros | {df['estacao'].nunique() if 'estacao' in df.columns else 0} estacoes")
 
     estacoes_unicas = df["estacao"].unique() if "estacao" in df.columns else []
 
@@ -59,7 +63,7 @@ try:
         df_filtrado = df_filtrado[mask]
 
     if df_filtrado.empty:
-        st.warning("Nenhum dado encontrado para os filtros selecionados.")
+        st.warning("Nenhum dado encontrado para os filtros selecionados. Tente ampliar o periodo.")
         st.stop()
 
     col1, col2, col3 = st.columns(3)
@@ -67,14 +71,11 @@ try:
     n_estacoes_total = df["estacao"].nunique() if "estacao" in df.columns else 0
     n_estacoes_risco = 0
     if "nivel_risco" in df_filtrado.columns:
-        ultima_data = df_filtrado.index.max() if isinstance(df_filtrado.index, pd.DatetimeIndex) else None
-        if ultima_data is not None:
-            df_ult = df_filtrado.loc[[ultima_data]] if isinstance(df_filtrado.loc[[ultima_data]], pd.DataFrame) else df_filtrado
-            try:
-                df_ultima = df_filtrado[df_filtrado.index == df_filtrado.index.max()]
-                n_estacoes_risco = df_ultima[df_ultima["nivel_risco"].isin(["Alto", "Muito Alto", "Critico"])]["estacao"].nunique()
-            except Exception:
-                pass
+        try:
+            df_ultima = df_filtrado[df_filtrado.index == df_filtrado.index.max()]
+            n_estacoes_risco = df_ultima[df_ultima["nivel_risco"].isin(["Alto", "Muito Alto", "Critico"])]["estacao"].nunique()
+        except Exception:
+            n_estacoes_risco = 0
 
     periodo_str = f"{df_filtrado.index.min().strftime('%d/%m/%Y')} a {df_filtrado.index.max().strftime('%d/%m/%Y')}" if isinstance(df_filtrado.index, pd.DatetimeIndex) and len(df_filtrado) > 0 else "N/A"
 
@@ -136,7 +137,11 @@ try:
     st.pyplot(fig_dist)
 
 except FileNotFoundError:
-    st.error("Arquivo de dados nao encontrado. Coloque o CSV em `data/inmet_sp.csv`.")
-    st.info("Certifique-se de que o arquivo CSV esta no caminho configurado.")
+    st.error("Arquivo de dados nao encontrado.")
+    st.info(f"Coloque o CSV em `{DATA_PATH}` ou configure a variavel de ambiente `DATA_PATH`.")
+except pd.errors.EmptyDataError:
+    st.error("O arquivo CSV esta vazio ou mal formatado.")
+    st.info("Verifique se o arquivo contem dados validos.")
 except Exception as e:
-    st.error(f"Erro ao carregar dados: {e}")
+    st.error(f"Erro inesperado ao carregar dados: {e}")
+    st.info("Verifique o formato do arquivo CSV e tente novamente.")

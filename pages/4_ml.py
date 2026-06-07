@@ -24,6 +24,7 @@ def _load_pipeline():
 
 
 st.header("🤖 Modelo ML")
+st.caption("Visualizacao das predicoes e metricas do modelo de Machine Learning.")
 
 model = load_model(MODEL_PATH)
 model_info = get_model_info(model, MODEL_PATH)
@@ -49,8 +50,12 @@ if model_info.get("n_features"):
 st.divider()
 
 try:
-    with st.spinner("Carregando dados..."):
+    with st.spinner("Carregando dados e gerando predicoes..."):
         df = _load_pipeline()
+
+    if df.empty:
+        st.warning("O dataset esta vazio apos o preprocessamento.")
+        st.stop()
 
     pct = calculate_historical_percentiles(df)
 
@@ -142,6 +147,10 @@ try:
         st.info("Feature importance nao disponivel — sera exibida quando o modelo for integrado.")
 
 except FileNotFoundError:
-    st.error("Arquivo de dados nao encontrado. Coloque o CSV em `data/inmet_sp.csv`.")
+    st.error("Arquivo de dados nao encontrado.")
+    st.info(f"Coloque o CSV em `{DATA_PATH}` ou configure a variavel de ambiente `DATA_PATH`.")
+except pd.errors.EmptyDataError:
+    st.error("O arquivo CSV esta vazio ou mal formatado.")
 except Exception as e:
-    st.error(f"Erro ao carregar dados: {e}")
+    st.error(f"Erro inesperado: {e}")
+    st.info("Verifique o formato dos dados e tente novamente.")

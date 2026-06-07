@@ -28,10 +28,15 @@ def _load_pipeline():
 
 
 st.header("📈 Historico")
+st.caption("Analise de acumulados, IRC e percentis historicos por estacao e periodo.")
 
 try:
     with st.spinner("Carregando dados..."):
         df, pct = _load_pipeline()
+
+    if df.empty:
+        st.warning("O dataset esta vazio apos o preprocessamento.")
+        st.stop()
 
     estacoes = sorted(df["estacao"].unique()) if "estacao" in df.columns else []
 
@@ -72,7 +77,7 @@ try:
         df_estacao = df_estacao[mask]
 
     if df_estacao.empty:
-        st.warning("Nenhum dado encontrado para os filtros selecionados.")
+        st.warning("Nenhum dado encontrado para os filtros selecionados. Tente ampliar o periodo.")
         st.stop()
 
     mes_selecionado = st.sidebar.selectbox(
@@ -130,6 +135,10 @@ try:
         st.info("IRC nao calculado para esta estacao.")
 
 except FileNotFoundError:
-    st.error("Arquivo de dados nao encontrado. Coloque o CSV em `data/inmet_sp.csv`.")
+    st.error("Arquivo de dados nao encontrado.")
+    st.info(f"Coloque o CSV em `{DATA_PATH}` ou configure a variavel de ambiente `DATA_PATH`.")
+except pd.errors.EmptyDataError:
+    st.error("O arquivo CSV esta vazio ou mal formatado.")
 except Exception as e:
-    st.error(f"Erro ao carregar dados: {e}")
+    st.error(f"Erro inesperado ao carregar dados: {e}")
+    st.info("Verifique o formato do arquivo CSV e tente novamente.")

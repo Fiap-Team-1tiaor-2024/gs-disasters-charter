@@ -11,14 +11,15 @@ from components.sensor_reader import load_sensor_data, normalizar_nivel_chuva, u
 ESP32_DATA_PATH = os.environ.get("ESP32_DATA_PATH", "data/esp32_simulado.json")
 
 st.header("📡 Painel ESP32")
+st.caption("Dados simulados do sensor ESP32: temperatura, umidade e nivel de chuva.")
 
-try: 
+try:
     with st.spinner("Carregando dados do ESP32..."):
         df_sensor = load_sensor_data(ESP32_DATA_PATH)
 
     if df_sensor.empty:
         st.warning("Nenhum dado do sensor ESP32 disponivel.")
-        st.info("Verifique se o arquivo `data/esp32_simulado.json` existe e esta no formato correto.")
+        st.info(f"Verifique se o arquivo `{ESP32_DATA_PATH}` existe e esta no formato correto.")
         st.subheader("Formato esperado do JSON")
         st.json([
             {
@@ -81,20 +82,33 @@ try:
         fig.tight_layout()
         st.pyplot(fig)
 
-        st.divider()
+    st.divider()
 
-        st.subheader("Integracao com IRC")
-        st.info(
-            "Os dados do sensor ESP32 podem ser integrados ao calculo do IRC como features adicionais. "
-            "Quando a umidade do sensor esta acima do P90 historico, um fator multiplicativo e aplicado "
-            "ao IRC base, aumentando o nivel de risco. "
-            "Esta integracao sera ativada quando os dados do sensor estiverem disponiveis em tempo real."
-        )
+    st.subheader("Integracao com IRC")
+    st.info(
+        "Os dados do sensor ESP32 sao integrados ao calculo do IRC como features adicionais. "
+        "Quando a umidade do sensor esta acima do P90 historico, um fator multiplicativo e aplicado "
+        "ao IRC base, aumentando o nivel de risco. "
+        "Formula: `irc_ajustado = irc_base * (1 + (umidade - threshold) / 100)` quando umidade > threshold."
+    )
 
     if not df_sensor.empty:
         umidade_max = df_sensor["umidade"].max()
         umidade_media = df_sensor["umidade"].mean()
         st.write(f"Umidade maxima registrada: **{umidade_max:.1f}%** | Media: **{umidade_media:.1f}%**")
+
+except FileNotFoundError:
+    st.warning("Arquivo do sensor ESP32 nao encontrado.")
+    st.info(f"Coloque o arquivo JSON em `{ESP32_DATA_PATH}` ou configure a variavel de ambiente `ESP32_DATA_PATH`.")
+    st.subheader("Formato esperado do JSON")
+    st.json([
+        {
+            "temperatura": 28.5,
+            "umidade": 78.2,
+            "nivel_chuva": 2048,
+            "timestamp": "2025-06-01T10:00:00"
+        }
+    ])
 except Exception as e:
-    st.error(f"Erro ao carregar ou processar os dados do ESP32: {e}")
-    st.info("Verifique o arquivo de dados e tente novamente.")
+    st.error(f"Erro ao processar dados do ESP32: {e}")
+    st.info("Verifique o formato do arquivo e tente novamente.")

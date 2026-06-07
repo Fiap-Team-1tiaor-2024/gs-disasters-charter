@@ -21,10 +21,15 @@ def _load_pipeline():
 
 
 st.header("🗺️ Mapa Interativo")
+st.caption("Visualize as estacoes meteorologicas coloridas pelo nivel de risco atual.")
 
 try:
-    with st.spinner("Carregando dados..."):
+    with st.spinner("Carregando dados e calculando risco..."):
         df = _load_pipeline()
+
+    if df.empty:
+        st.warning("O dataset esta vazio apos o preprocessamento.")
+        st.stop()
 
     with st.sidebar:
         st.subheader("Filtros do Mapa")
@@ -66,7 +71,10 @@ try:
     )
 
 except FileNotFoundError:
-    st.error("Arquivo de dados nao encontrado. Coloque o CSV em `data/inmet_sp.csv`.")
-    st.info("Certifique-se de que o arquivo CSV esta no caminho configurado.")
+    st.error("Arquivo de dados nao encontrado.")
+    st.info(f"Coloque o CSV em `{DATA_PATH}` ou configure a variavel de ambiente `DATA_PATH`.")
+except pd.errors.EmptyDataError:
+    st.error("O arquivo CSV esta vazio ou mal formatado.")
 except Exception as e:
-    st.error(f"Erro ao carregar dados: {e}")
+    st.error(f"Erro inesperado ao carregar dados: {e}")
+    st.info("Verifique o formato do arquivo CSV e tente novamente.")
