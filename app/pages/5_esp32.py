@@ -5,7 +5,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import streamlit as st
 
-from app.components.sensor_reader import load_sensor_data, normalizar_nivel_chuva, ultima_leitura
+from components.sensor_reader import load_sensor_data, normalizar_nivel_chuva, ultima_leitura
 
 
 ESP32_DATA_PATH = os.environ.get("ESP32_DATA_PATH", "data/esp32_simulado.json")

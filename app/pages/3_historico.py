@@ -3,10 +3,10 @@ import os
 import streamlit as st
 import pandas as pd
 
-from app.pipeline.loader import load_and_preprocess
-from app.pipeline.accumulator import calculate_accumulations
-from app.pipeline.alerts import calculate_irc, calculate_historical_percentiles, CORES_RISCO
-from app.components.chart_builder import plot_accumulation_timeseries, plot_accumulation_histogram
+from pipeline.loader import load_and_preprocess
+from pipeline.accumulator import calculate_accumulations
+from pipeline.alerts import calculate_irc, calculate_historical_percentiles, CORES_RISCO
+from components.chart_builder import plot_accumulation_timeseries, plot_accumulation_histogram
 
 
 DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp.csv")

@@ -7,7 +7,7 @@ import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 
-from app.pipeline.alerts import CORES_RISCO, NIVEIS_RISCO
+from pipeline.alerts import CORES_RISCO, NIVEIS_RISCO
 
 
 def plot_risk_distribution(df: pd.DataFrame) -> plt.Figure:

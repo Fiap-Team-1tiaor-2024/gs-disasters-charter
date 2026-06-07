@@ -1,6 +1,6 @@
-from app.pipeline.loader import load_and_preprocess
-from app.pipeline.accumulator import calculate_accumulations
-from app.pipeline.alerts import (
+from pipeline.loader import load_and_preprocess
+from pipeline.accumulator import calculate_accumulations
+from pipeline.alerts import (
     calculate_historical_percentiles,
     calculate_risk_scores,
     calculate_irc,
@@ -10,7 +10,7 @@ from app.pipeline.alerts import (
     CORES_RISCO,
     JANELAS_MAP,
 )
-from app.pipeline.reporter import (
+from pipeline.reporter import (
     gerar_alertas_precipitacao,
     plotar_analise_chuva_estacao,
     plotar_mapa_estacoes,
