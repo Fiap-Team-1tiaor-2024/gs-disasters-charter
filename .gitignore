@@ -194,9 +194,9 @@ cython_debug/
 .cursorindexingignore
 
 # Disasters Charter — dados e outputs
-data/
+app/data/
 *.csv
-!data/.gitkeep
-assets/imagens/
+!app/data/.gitkeep
+app/assets/imagens/
 outputs_gerados/
 *.egg
