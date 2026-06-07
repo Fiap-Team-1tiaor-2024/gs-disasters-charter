@@ -52,6 +52,8 @@ def calculate_accumulations(
         )
         df[col_nome] = df[col_nome].astype("float32")
 
+    df = df.sort_index()
+
     elapsed = time.time() - inicio
     print(f"[accumulator] Acumulados calculados em {elapsed:.1f}s para janelas {janelas_horas}")
 
