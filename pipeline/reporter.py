@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import folium
 from PIL import Image
+import streamlit as st
 
 EXTENSOES_IMAGEM_VALIDAS = (".jpg", ".jpeg", ".png")
 
@@ -86,6 +87,7 @@ def criar_thumbnail_base64(caminho_completo_imagem: str, largura_max: int = 200,
         return f"<i>Erro ao carregar imagem: {e}</i>"
 
 
+@st.cache_data(show_spinner="Gerando alertas de precipitacao...")
 def gerar_alertas_precipitacao(
     df_dados: pd.DataFrame,
     limiares: Optional[List[Dict]] = None,
