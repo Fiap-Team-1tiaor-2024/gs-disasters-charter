@@ -159,12 +159,74 @@ def calculate_risk_scores(
     return df
 
 
+def adjust_irc_with_sensor(
+    df: pd.DataFrame,
+    df_sensor: Optional[pd.DataFrame] = None,
+    umidade_p90_threshold: float = 85.0,
+) -> pd.DataFrame:
+    """Ajusta o IRC com base nos dados do sensor ESP32.
+
+    Formula documentada:
+        irc_ajustado = irc_base * fator_umidade
+        fator_umidade = 1 + (umidade_relativa - umidade_p90_threshold) / 100
+                     se umidade > umidade_p90_threshold
+                     1.0 caso contrario
+
+    Umidade relativa alta combinada com precipitacao alta aumenta o risco
+    de deslizamento e enchente. O fator e proporcional ao excedente de
+    umidade acima do percentil 90 historico do sensor.
+
+    Args:
+        df: DataFrame com coluna 'irc' ja calculada.
+        df_sensor: DataFrame do sensor com coluna 'umidade'. Se None, nao aplica ajuste.
+        umidade_p90_threshold: Limiar de umidade para ativacao do fator (padrao: 85%).
+
+    Returns:
+        DataFrame com colunas 'irc' ajustada e 'irc_base' (valor original),
+        e 'nivel_risco' recalculado com base no IRC ajustado.
+    """
+    if df_sensor is None or df_sensor.empty or "umidade" not in df_sensor.columns:
+        print("[alerts] Sem dados do sensor — IRC base utilizado sem ajuste")
+        return df
+
+    df = df.copy()
+    df["irc_base"] = df["irc"].copy()
+
+    umidade_media = df_sensor["umidade"].mean()
+
+    if umidade_media > umidade_p90_threshold:
+        fator_umidade = 1.0 + (umidade_media - umidade_p90_threshold) / 100.0
+        df["irc"] = (df["irc"] * fator_umidade).clip(0, 1).astype("float32")
+        df["fator_umidade"] = fator_umidade
+        print(f"[alerts] IRC ajustado pelo sensor: umidade_media={umidade_media:.1f}%, fator={fator_umidade:.3f}")
+    else:
+        df["fator_umidade"] = 1.0
+        print(f"[alerts] Umidade ({umidade_media:.1f}%) abaixo do limiar ({umidade_p90_threshold}%) — sem ajuste")
+
+    def _classificar_risco(irc_val):
+        if irc_val < 0.25:
+            return "Normal"
+        elif irc_val < 0.50:
+            return "Atencao"
+        elif irc_val < 0.75:
+            return "Alto"
+        elif irc_val < 0.95:
+            return "Muito Alto"
+        else:
+            return "Critico"
+
+    df["nivel_risco"] = df["irc"].apply(_classificar_risco).astype("category")
+
+    return df
+
+
 @st.cache_data(show_spinner="Calculando IRC e niveis de risco...")
 def calculate_irc(
     df: pd.DataFrame,
     percentiles: Optional[pd.DataFrame] = None,
     weights: Optional[Dict[str, float]] = None,
     janelas: Optional[Dict[str, str]] = None,
+    df_sensor: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Calcula o Indice de Risco Composto (IRC) para cada registro.
 
@@ -183,10 +245,12 @@ def calculate_irc(
         percentiles: DataFrame de percentis. Se None, sera calculado internamente.
         weights: Pesos para cada janela. Padrao: {"1h": 0.35, "6h": 0.30, "24h": 0.20, "72h": 0.15}.
         janelas: Dicionario mapeando nome da janela para nome da coluna.
+        df_sensor: DataFrame do sensor ESP32 com coluna 'umidade'. Se None, nao aplica ajuste.
 
     Returns:
         DataFrame original com colunas adicionais:
         score_{janela}, nivel_{janela}, irc (0 a 1), nivel_risco (categorico).
+        Se df_sensor for fornecido, inclui irc_base e fator_umidade.
     """
     inicio = time.time()
 
@@ -229,6 +293,9 @@ def calculate_irc(
             return "Critico"
 
     df["nivel_risco"] = df["irc"].apply(_classificar_risco).astype("category")
+
+    if df_sensor is not None:
+        df = adjust_irc_with_sensor(df, df_sensor)
 
     elapsed = time.time() - inicio
     print(f"[alerts] IRC calculado em {elapsed:.1f}s")
