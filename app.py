@@ -2,12 +2,12 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Disasters Charter",
-    page_icon="⚠️",
+    page_icon="🌤️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("Disasters Charter")
+st.title("🌦️ Disasters Charter")
 st.subheader("Monitoramento e Previsão de Desastres Naturais")
 
 pg = st.navigation([
