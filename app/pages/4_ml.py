@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import pandas as pd
 
-from pipeline.loader import load_and_preprocess
-from pipeline.accumulator import calculate_accumulations
-from pipeline.alerts import calculate_irc, calculate_historical_percentiles, CORES_RISCO
-from ml.model_interface import load_model, build_features, predict_risk, get_model_info, get_feature_importance
+from app.pipeline.loader import load_and_preprocess
+from app.pipeline.accumulator import calculate_accumulations
+from app.pipeline.alerts import calculate_irc, calculate_historical_percentiles, CORES_RISCO
+from app.ml.model_interface import load_model, build_features, predict_risk, get_model_info, get_feature_importance
 
 
 DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp.csv")

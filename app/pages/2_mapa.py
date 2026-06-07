@@ -4,10 +4,10 @@ import streamlit as st
 import pandas as pd
 from streamlit_folium import st_folium
 
-from pipeline.loader import load_and_preprocess
-from pipeline.accumulator import calculate_accumulations
-from pipeline.alerts import calculate_irc, NIVEIS_RISCO
-from components.map_builder import build_risk_map
+from app.pipeline.loader import load_and_preprocess
+from app.pipeline.accumulator import calculate_accumulations
+from app.pipeline.alerts import calculate_irc, NIVEIS_RISCO
+from app.components.map_builder import build_risk_map
 
 
 DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp.csv")

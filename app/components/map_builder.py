@@ -3,7 +3,7 @@ from typing import List, Optional
 import folium
 import pandas as pd
 
-from pipeline.alerts import CORES_RISCO
+from app.pipeline.alerts import CORES_RISCO
 
 
 def build_risk_map(
