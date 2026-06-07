@@ -1,7 +1,7 @@
 # =============================================================================
-# ml_model.py — Módulo de Machine Learning (versão final)
-# Global Solution 2026.1 — Monitoramento de Eventos Pluviais Extremos em SP
-# Autora: Gabriela da Cunha Rocha — RM561041
+# ml_model.py - Módulo de Machine Learning (versão final)
+# Global Solution 2026.1 - Monitoramento de Eventos Pluviais Extremos em SP
+# Autora: Gabriela da Cunha Rocha - RM561041
 #
 # Pipeline completo:
 #   1. Engenharia de features (temporais, variação, sazonalidade, tendência)
@@ -74,7 +74,7 @@ FEATURES_BASE = [
 ]
 
 # =============================================================================
-# SEÇÃO 1 — ENGENHARIA DE FEATURES
+# SEÇÃO 1 - ENGENHARIA DE FEATURES
 # =============================================================================
 
 def engenharia_de_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -125,7 +125,7 @@ def engenharia_de_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # =============================================================================
-# SEÇÃO 2 — GERAÇÃO DE LABELS
+# SEÇÃO 2 - GERAÇÃO DE LABELS
 # =============================================================================
 
 def gerar_labels(df: pd.DataFrame, limiares: list = LIMIARES) -> pd.Series:
@@ -147,7 +147,7 @@ def gerar_labels(df: pd.DataFrame, limiares: list = LIMIARES) -> pd.Series:
 
 
 # =============================================================================
-# SEÇÃO 3 — PREPARAÇÃO DO DATASET
+# SEÇÃO 3 - PREPARAÇÃO DO DATASET
 # =============================================================================
 
 def preparar_dataset(df_acumulados: pd.DataFrame,
@@ -156,7 +156,7 @@ def preparar_dataset(df_acumulados: pd.DataFrame,
     Aplica engenharia de features, gera labels e retorna X, y prontos,
     com amostragem estratificada se o dataset for muito grande.
     """
-    print("\n[ML] ── Preparando dataset ──────────────────────────────")
+    print("\n[ML] -- Preparando dataset ------------------------------")
     df = engenharia_de_features(df_acumulados)
     y  = gerar_labels(df)
 
@@ -176,7 +176,7 @@ def preparar_dataset(df_acumulados: pd.DataFrame,
         print(f"       {c:<15}: {n:>8,}  ({100*n/len(y):.1f}%)")
 
     if len(X) > amostra_max:
-        print(f"\n[ML] Amostrando {amostra_max:,} linhas (estratificado)…")
+        print(f"\n[ML] Amostrando {amostra_max:,} linhas (estratificado)...")
         X, _, y, _ = train_test_split(
             X, y, train_size=amostra_max, stratify=y, random_state=SEMENTE
         )
@@ -186,7 +186,7 @@ def preparar_dataset(df_acumulados: pd.DataFrame,
 
 
 # =============================================================================
-# SEÇÃO 4 — TREINAMENTO E VALIDAÇÃO CRUZADA
+# SEÇÃO 4 - TREINAMENTO E VALIDAÇÃO CRUZADA
 # =============================================================================
 
 def _construir_modelos(classes_unicas, y_train):
@@ -231,7 +231,7 @@ def treinar_modelos(X_train, y_train, X_test, y_test,
     resultados = {}
 
     for nome, modelo in modelos_config.items():
-        print(f"\n[ML] ── Treinando {nome} ──────────────────────────────")
+        print(f"\n[ML] -- Treinando {nome} ------------------------------")
         usa_enc = (nome == 'XGBoost') and XGBOOST_OK
 
         y_tr = le.transform(y_train) if usa_enc else y_train
@@ -294,7 +294,7 @@ def treinar_modelos(X_train, y_train, X_test, y_test,
 
 
 # =============================================================================
-# SEÇÃO 5 — GRÁFICOS DE AVALIAÇÃO
+# SEÇÃO 5 - GRÁFICOS DE AVALIAÇÃO
 # =============================================================================
 
 def _plot_matriz_confusao(y_true, y_pred, nome, out):
@@ -302,7 +302,7 @@ def _plot_matriz_confusao(y_true, y_pred, nome, out):
     fig, ax = plt.subplots(figsize=(7, 6))
     ConfusionMatrixDisplay(cm, display_labels=ORDEM_CLASSES).plot(
         ax=ax, colorbar=True, cmap='Blues')
-    ax.set_title(f'Matriz de Confusão — {nome}', fontsize=12)
+    ax.set_title(f'Matriz de Confusão - {nome}', fontsize=12)
     plt.xticks(rotation=30, ha='right'); plt.tight_layout()
     _salvar(fig, out, f'matriz_confusao_{_slug(nome)}.png')
 
@@ -319,7 +319,7 @@ def _plot_roc_multiclasse(y_true, y_proba, nome, out):
                 color=CORES_CLASSES.get(cls, 'gray'), lw=2)
     ax.plot([0,1],[0,1],'k--', lw=1)
     ax.set(xlabel='Taxa de Falsos Positivos', ylabel='Taxa de Verdadeiros Positivos',
-           title=f'Curva ROC Multiclasse — {nome}')
+           title=f'Curva ROC Multiclasse - {nome}')
     ax.legend(loc='lower right'); ax.grid(alpha=0.3); plt.tight_layout()
     _salvar(fig, out, f'roc_{_slug(nome)}.png')
 
@@ -335,7 +335,7 @@ def _plot_precision_recall(y_true, y_proba, nome, out):
         ax.plot(rec, prec, label=f'{cls} (AP={ap:.3f})',
                 color=CORES_CLASSES.get(cls, 'gray'), lw=2)
     ax.set(xlabel='Recall', ylabel='Precisão',
-           title=f'Curva Precision-Recall — {nome}')
+           title=f'Curva Precision-Recall - {nome}')
     ax.legend(loc='upper right'); ax.grid(alpha=0.3); plt.tight_layout()
     _salvar(fig, out, f'precision_recall_{_slug(nome)}.png')
 
@@ -347,7 +347,7 @@ def _plot_importancia(modelo, features, nome, out):
     fig, ax = plt.subplots(figsize=(9, max(5, len(features)//2)))
     cores = ['#e74c3c' if v > imp.quantile(0.8) else '#3498db' for v in imp]
     imp.plot(kind='barh', ax=ax, color=cores, edgecolor='white')
-    ax.set_title(f'Importância das Features — {nome}', fontsize=12)
+    ax.set_title(f'Importância das Features - {nome}', fontsize=12)
     ax.set_xlabel('Importância (Gini)')
     ax.axvline(imp.mean(), color='black', linestyle='--', alpha=0.5, label='Média')
     ax.legend(); ax.grid(axis='x', alpha=0.3); plt.tight_layout()
@@ -377,13 +377,13 @@ def _plot_comparativo(resultados, out):
 
     ax.set_xticks(x); ax.set_xticklabels(nomes, fontsize=11)
     ax.set_ylim(0, 1.1); ax.set_ylabel('Score')
-    ax.set_title('Comparativo de Modelos — ML Risco Climático', fontsize=13)
+    ax.set_title('Comparativo de Modelos - ML Risco Climático', fontsize=13)
     ax.legend(); ax.grid(axis='y', alpha=0.3); plt.tight_layout()
     _salvar(fig, out, 'comparativo_modelos.png')
 
 
 # =============================================================================
-# SEÇÃO 6 — SHAP (EXPLICABILIDADE)
+# SEÇÃO 6 - SHAP (EXPLICABILIDADE)
 # =============================================================================
 
 def gerar_shap(modelo, X_test_sample: pd.DataFrame, nome: str, out: str,
@@ -391,7 +391,7 @@ def gerar_shap(modelo, X_test_sample: pd.DataFrame, nome: str, out: str,
     """
     Calcula SHAP values e gera summary plot + waterfall do pior caso.
     """
-    print(f"\n[ML] Calculando SHAP values para {nome}…")
+    print(f"\n[ML] Calculando SHAP values para {nome}...")
     try:
         sample = X_test_sample.sample(min(n_amostras, len(X_test_sample)),
                                        random_state=SEMENTE)
@@ -402,7 +402,7 @@ def gerar_shap(modelo, X_test_sample: pd.DataFrame, nome: str, out: str,
 
         shap_values = explainer.shap_values(sample)
 
-        # Summary plot (beeswarm) — multiclasse: usa classe ALERTA MÁXIMO (índice 3)
+        # Summary plot (beeswarm) - multiclasse: usa classe ALERTA MÁXIMO (índice 3)
         fig, ax = plt.subplots(figsize=(10, 7))
         if isinstance(shap_values, list):
             sv = shap_values[3] if len(shap_values) > 3 else shap_values[-1]
@@ -410,7 +410,7 @@ def gerar_shap(modelo, X_test_sample: pd.DataFrame, nome: str, out: str,
             sv = shap_values
         shap.summary_plot(sv, sample, plot_type='dot',
                           show=False, max_display=15)
-        plt.title(f'SHAP — Importância para ALERTA MÁXIMO ({nome})', fontsize=12)
+        plt.title(f'SHAP - Importância para ALERTA MÁXIMO ({nome})', fontsize=12)
         plt.tight_layout()
         _salvar(plt.gcf(), out, f'shap_summary_{_slug(nome)}.png')
         plt.close('all')
@@ -421,7 +421,7 @@ def gerar_shap(modelo, X_test_sample: pd.DataFrame, nome: str, out: str,
 
 
 # =============================================================================
-# SEÇÃO 7 — DETECÇÃO DE ANOMALIAS (Isolation Forest)
+# SEÇÃO 7 - DETECÇÃO DE ANOMALIAS (Isolation Forest)
 # =============================================================================
 
 def detectar_anomalias(df_acumulados: pd.DataFrame,
@@ -434,7 +434,7 @@ def detectar_anomalias(df_acumulados: pd.DataFrame,
     Retorna o DataFrame original com coluna 'anomalia' (True/False)
     e 'score_anomalia' (quanto mais negativo, mais anômalo).
     """
-    print("\n[ML] ── Detecção de Anomalias (Isolation Forest) ────────")
+    print("\n[ML] -- Detecção de Anomalias (Isolation Forest) --------")
     df = engenharia_de_features(df_acumulados)
     feats_ok = [f for f in features_usadas if f in df.columns]
     X = df[feats_ok].fillna(0)
@@ -488,7 +488,7 @@ def detectar_anomalias(df_acumulados: pd.DataFrame,
         ax.scatter(anomalias_df.index, anomalias_df['prec_acum_24h'],
                    c='red', alpha=0.5, s=10, label='Anomalia detectada')
         ax.set(xlabel='Data', ylabel='Acumulado 24h (mm)',
-               title='Eventos Anômalos Detectados — Série Temporal')
+               title='Eventos Anômalos Detectados - Série Temporal')
         ax.legend(); ax.grid(alpha=0.3); plt.tight_layout()
         _salvar(fig, caminho_outputs, 'anomalias_serie_temporal.png')
 
@@ -498,7 +498,7 @@ def detectar_anomalias(df_acumulados: pd.DataFrame,
 
 
 # =============================================================================
-# SEÇÃO 8 — PREDIÇÃO ANTECIPADA (próximas N horas)
+# SEÇÃO 8 - PREDIÇÃO ANTECIPADA (próximas N horas)
 # =============================================================================
 
 def criar_features_preditivas(df_acumulados: pd.DataFrame,
@@ -508,7 +508,7 @@ def criar_features_preditivas(df_acumulados: pd.DataFrame,
     que ocorrerá daqui a 'horas_ahead' horas. Isso transforma o modelo
     de reativo para preditivo.
     """
-    print(f"\n[ML] ── Criando features para predição {horas_ahead}h à frente ──")
+    print(f"\n[ML] -- Criando features para predição {horas_ahead}h à frente --")
     df = engenharia_de_features(df_acumulados)
     y_atual = gerar_labels(df, LIMIARES)
 
@@ -560,7 +560,7 @@ def treinar_modelo_preditivo(df_acumulados: pd.DataFrame,
 
     acc = accuracy_score(y_te, y_pred)
     f1  = f1_score(y_te, y_pred, average='weighted', zero_division=0)
-    print(f"\n  Modelo preditivo ({horas_ahead}h ahead) — Acurácia: {acc:.4f} | F1: {f1:.4f}")
+    print(f"\n  Modelo preditivo ({horas_ahead}h ahead) - Acurácia: {acc:.4f} | F1: {f1:.4f}")
 
     _plot_matriz_confusao(y_te, y_pred, f'Pred_{horas_ahead}h_ahead', caminho_outputs)
 
@@ -573,7 +573,7 @@ def treinar_modelo_preditivo(df_acumulados: pd.DataFrame,
 
 
 # =============================================================================
-# SEÇÃO 9 — ANÁLISES COMPLEMENTARES
+# SEÇÃO 9 - ANÁLISES COMPLEMENTARES
 # =============================================================================
 
 def analise_risco_por_regiao(df_acumulados: pd.DataFrame,
@@ -582,7 +582,7 @@ def analise_risco_por_regiao(df_acumulados: pd.DataFrame,
     Analisa a distribuição de risco por município para identificar
     regiões sistematicamente mais vulneráveis.
     """
-    print("\n[ML] ── Análise de Risco por Região ─────────────────────")
+    print("\n[ML] -- Análise de Risco por Região ---------------------")
     df = engenharia_de_features(df_acumulados)
     df['risco'] = gerar_labels(df, LIMIARES)
 
@@ -620,7 +620,7 @@ def analise_risco_sazonal(df_acumulados: pd.DataFrame,
     """
     Mostra como o risco varia ao longo dos meses e estações do ano.
     """
-    print("\n[ML] ── Análise Sazonal de Risco ────────────────────────")
+    print("\n[ML] -- Análise Sazonal de Risco ------------------------")
     df = engenharia_de_features(df_acumulados)
     df['risco'] = gerar_labels(df, LIMIARES)
     df['mes']   = df.index.month
@@ -640,7 +640,7 @@ def analise_risco_sazonal(df_acumulados: pd.DataFrame,
     pivot_pct.plot(kind='bar', ax=ax, stacked=True,
                    color=[CORES_CLASSES.get(c, 'gray') for c in cols_pres])
     ax.set(xlabel='Mês', ylabel='Proporção (%)',
-           title='Sazonalidade do Risco Climático — São Paulo (INMET)')
+           title='Sazonalidade do Risco Climático - São Paulo (INMET)')
     ax.legend(loc='upper right'); ax.grid(axis='y', alpha=0.3)
     plt.xticks(rotation=0); plt.tight_layout()
     _salvar(fig, caminho_outputs, 'risco_sazonal.png')
@@ -648,7 +648,7 @@ def analise_risco_sazonal(df_acumulados: pd.DataFrame,
 
 
 # =============================================================================
-# SEÇÃO 10 — RELATÓRIO PDF AUTOMÁTICO
+# SEÇÃO 10 - RELATÓRIO PDF AUTOMÁTICO
 # =============================================================================
 
 def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
@@ -658,14 +658,14 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
     Gera um PDF completo com introdução, metodologia, métricas,
     gráficos embutidos e conclusão. Pronto para o PDF da GS.
     """
-    print("\n[ML] ── Gerando Relatório PDF ───────────────────────────")
+    print("\n[ML] -- Gerando Relatório PDF ---------------------------")
 
     class PDF(FPDF):
         def header(self):
             self.set_font('Helvetica', 'B', 10)
             self.set_fill_color(30, 80, 160)
             self.set_text_color(255, 255, 255)
-            self.cell(0, 10, 'Global Solution 2026.1 — Módulo de Machine Learning',
+            self.cell(0, 10, 'Global Solution 2026.1 - Módulo de Machine Learning',
                       fill=True, ln=True, align='C')
             self.set_text_color(0, 0, 0)
             self.ln(2)
@@ -674,7 +674,7 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
             self.set_y(-15)
             self.set_font('Helvetica', 'I', 8)
             self.set_text_color(128)
-            self.cell(0, 10, f'Página {self.page_no()} | Gabriela da Cunha Rocha — RM561041', align='C')
+            self.cell(0, 10, f'Página {self.page_no()} | Gabriela da Cunha Rocha - RM561041', align='C')
 
         def titulo(self, texto):
             self.set_font('Helvetica', 'B', 13)
@@ -711,13 +711,13 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
 
-    # ── Capa / Introdução ──
+    # -- Capa / Introdução --
     pdf.set_font('Helvetica', 'B', 16)
     pdf.ln(5)
     pdf.cell(0, 12, 'Módulo de Machine Learning', ln=True, align='C')
     pdf.set_font('Helvetica', '', 11)
     pdf.cell(0, 7, 'Classificação e Predição de Risco em Eventos Pluviais Extremos', ln=True, align='C')
-    pdf.cell(0, 7, 'São Paulo — Dados INMET (2001–2023)', ln=True, align='C')
+    pdf.cell(0, 7, 'São Paulo - Dados INMET (2001-2023)', ln=True, align='C')
     pdf.ln(6)
 
     pdf.titulo('1. Introdução e Objetivo')
@@ -728,7 +728,7 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
         'risco (NORMAL, ATENÇÃO, ALERTA, ALERTA MÁXIMO) com base em múltiplas features temporais '
         'e de variação de chuva.\n\n'
         'Adicionalmente, um Isolation Forest detecta eventos anômalos sem precedente histórico, '
-        'e um modelo preditivo antecipa o nível de risco 3 horas à frente — funcionalidade '
+        'e um modelo preditivo antecipa o nível de risco 3 horas à frente - funcionalidade '
         'impossível no sistema de regras original.'
     )
 
@@ -736,11 +736,11 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
     pdf.subtitulo('2.1. Engenharia de Features')
     pdf.corpo(
         f'Foram construídas {len(features)} features a partir dos acumulados do pipeline original:\n'
-        '  • Temporais: hora do dia, mês, estação do ano, dia da semana\n'
-        '  • Variação entre janelas: variação 1h→3h, 3h→6h, 6h→24h, 24h→72h\n'
-        '  • Aceleração da chuva: segunda derivada da intensidade\n'
-        '  • Intensidade relativa: fração do 24h que veio na última hora\n'
-        '  • Estatísticas móveis: média e desvio padrão 6h por estação\n\n'
+        '  - Temporais: hora do dia, mês, estação do ano, dia da semana\n'
+        '  - Variação entre janelas: variação 1h->3h, 3h->6h, 6h->24h, 24h->72h\n'
+        '  - Aceleração da chuva: segunda derivada da intensidade\n'
+        '  - Intensidade relativa: fração do 24h que veio na última hora\n'
+        '  - Estatísticas móveis: média e desvio padrão 6h por estação\n\n'
         'Features utilizadas:\n' + ', '.join(features)
     )
 
@@ -755,18 +755,18 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
     modelo_nome2 = 'XGBoost' if XGBOOST_OK else 'GradientBoosting'
     pdf.corpo(
         f'Foram treinados e comparados dois modelos:\n'
-        f'  • Random Forest (300 estimadores, max_depth=18, class_weight=balanced)\n'
-        f'  • {modelo_nome2} (300 estimadores, max_depth=8, learning_rate=0.08)\n\n'
+        f'  - Random Forest (300 estimadores, max_depth=18, class_weight=balanced)\n'
+        f'  - {modelo_nome2} (300 estimadores, max_depth=8, learning_rate=0.08)\n\n'
         'Validação: StratifiedKFold 5-fold para garantir representatividade das classes raras.\n'
         'Desbalanceamento: tratado com class_weight="balanced" e amostragem estratificada.'
     )
 
-    # ── Resultados ──
+    # -- Resultados --
     pdf.add_page()
     pdf.titulo('3. Resultados dos Modelos')
 
     for nome, res in resultados.items():
-        marcador = '★ MELHOR MODELO' if nome == melhor_nome else ''
+        marcador = '* MELHOR MODELO' if nome == melhor_nome else ''
         pdf.subtitulo(f'{nome}  {marcador}')
         roc_str = f"{res['roc_auc']:.4f}" if res['roc_auc'] else 'N/A'
         pdf.corpo(
@@ -780,7 +780,7 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
 
     pdf.imagem_centralizada(os.path.join(caminho_outputs, 'comparativo_modelos.png'))
 
-    # ── ROC e PR ──
+    # -- ROC e PR --
     pdf.add_page()
     pdf.titulo('4. Curvas ROC e Precision-Recall')
     roc_img = os.path.join(caminho_outputs, f'roc_{_slug(melhor_nome)}.png')
@@ -788,7 +788,7 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
     pdf.imagem_centralizada(roc_img)
     pdf.imagem_centralizada(pr_img)
 
-    # ── Importância e SHAP ──
+    # -- Importância e SHAP --
     pdf.add_page()
     pdf.titulo('5. Importância de Features e Explicabilidade (SHAP)')
     imp_img  = os.path.join(caminho_outputs, f'importancia_{_slug(melhor_nome)}.png')
@@ -799,19 +799,19 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
                   'predição de ALERTA MÁXIMO. Valores positivos empurram para risco maior.')
         pdf.imagem_centralizada(shap_img)
 
-    # ── Anomalias ──
+    # -- Anomalias --
     pdf.add_page()
     pdf.titulo('6. Detecção de Anomalias (Isolation Forest)')
     pdf.corpo(
         'O Isolation Forest foi treinado com contaminação de 2% para detectar registros '
         'historicamente anômalos. Eventos como o desastre de São Sebastião (fev/2023), '
-        'com acumulado 24h de 292,6 mm em Bertioga, devem aparecer como outliers extremos — '
+        'com acumulado 24h de 292,6 mm em Bertioga, devem aparecer como outliers extremos - '
         'validando que o modelo captura eventos sem precedente histórico direto.'
     )
     for img_nome in ['anomalias_distribuicao.png', 'anomalias_serie_temporal.png']:
         pdf.imagem_centralizada(os.path.join(caminho_outputs, img_nome))
 
-    # ── Predição antecipada ──
+    # -- Predição antecipada --
     pdf.add_page()
     pdf.titulo('7. Predição Antecipada de Risco (3h à Frente)')
     if pacote_preditivo:
@@ -825,13 +825,13 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
     pred_img = os.path.join(caminho_outputs, f'matriz_confusao_pred_3h_ahead.png')
     pdf.imagem_centralizada(pred_img)
 
-    # ── Análises regionais ──
+    # -- Análises regionais --
     pdf.add_page()
     pdf.titulo('8. Análise Regional e Sazonal')
     for img_nome in ['risco_por_municipio.png', 'risco_sazonal.png']:
         pdf.imagem_centralizada(os.path.join(caminho_outputs, img_nome))
 
-    # ── Conclusão ──
+    # -- Conclusão --
     pdf.add_page()
     pdf.titulo('9. Conclusão')
     pdf.corpo(
@@ -843,7 +843,7 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
         '  3. DETECÇÃO DE ANOMALIAS: o Isolation Forest sinaliza eventos sem precedente '
         'histórico, complementando a classificação supervisionada.\n\n'
         '  4. EXPLICABILIDADE: os SHAP values tornam o modelo auditável, mostrando quais '
-        'features mais influenciam cada predição — essencial para uso em políticas públicas.\n\n'
+        'features mais influenciam cada predição - essencial para uso em políticas públicas.\n\n'
         'Os modelos foram treinados sobre 4,6 milhões de registros horários de 42 estações '
         'meteorológicas do INMET e validados com o evento real de São Sebastião/Bertioga '
         '(fevereiro de 2023), demonstrando aplicabilidade real para monitoramento climático '
@@ -857,7 +857,7 @@ def gerar_relatorio_pdf(resultados: dict, melhor_nome: str,
 
 
 # =============================================================================
-# SEÇÃO 11 — PIPELINE PRINCIPAL
+# SEÇÃO 11 - PIPELINE PRINCIPAL
 # =============================================================================
 
 def treinar_e_salvar(df_acumulados: pd.DataFrame,
@@ -882,8 +882,8 @@ def treinar_e_salvar(df_acumulados: pd.DataFrame,
     """
     os.makedirs(caminho_outputs, exist_ok=True)
     print("\n" + "="*65)
-    print("MÓDULO ML — Global Solution 2026.1")
-    print("Classificação de Risco em Eventos Pluviais Extremos — SP")
+    print("MÓDULO ML - Global Solution 2026.1")
+    print("Classificação de Risco em Eventos Pluviais Extremos - SP")
     print("="*65)
 
     # 1. Preparar dataset
@@ -900,7 +900,7 @@ def treinar_e_salvar(df_acumulados: pd.DataFrame,
     # 4. Eleger melhor modelo (F1 ponderado)
     melhor_nome = max(resultados, key=lambda k: resultados[k]['f1'])
     melhor      = resultados[melhor_nome]
-    print(f"\n[ML] ✅ Melhor modelo: {melhor_nome} "
+    print(f"\n[ML] [OK] Melhor modelo: {melhor_nome} "
           f"(F1={melhor['f1']:.4f} | ROC-AUC={melhor['roc_auc'] or 'N/A'})")
 
     # 5. Gráficos complementares
@@ -946,7 +946,7 @@ def treinar_e_salvar(df_acumulados: pd.DataFrame,
     )
 
     print("\n" + "="*65)
-    print("MÓDULO ML — CONCLUÍDO")
+    print("MÓDULO ML - CONCLUÍDO")
     print(f"  Modelo   : {melhor_nome}")
     print(f"  Acurácia : {melhor['acuracia']:.4f}")
     print(f"  F1       : {melhor['f1']:.4f}")
@@ -972,7 +972,7 @@ def _slug(texto):
 
 
 if __name__ == "__main__":
-    print("ml_model.py — importe treinar_e_salvar() no seu notebook.")
+    print("ml_model.py - importe treinar_e_salvar() no seu notebook.")
     print("Exemplo:")
     print("  from ml_model import treinar_e_salvar")
     print("  pacote = treinar_e_salvar(dados_com_prec_acumulada)")
