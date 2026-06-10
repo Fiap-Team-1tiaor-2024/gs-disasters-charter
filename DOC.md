@@ -9,10 +9,12 @@
 - Vitor Lopes Romão — RM559858
 - Gabrielle Halasc — RM560147
 
-Grupo 28 — 1TIAOR
-Curso: Inteligência Artificial
-Instituição: FIAP
-Disciplina: Global Solution 2026.06
+## Informações do Grupo
+
+- Grupo 28 — 1TIAOR
+- Curso: Inteligência Artificial
+- Instituição: FIAP
+- Global Solution 2026.06
 
 ## Link do Repositório GitHub
 
