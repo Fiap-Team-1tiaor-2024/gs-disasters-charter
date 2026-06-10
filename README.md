@@ -14,6 +14,13 @@ O **Disasters Charter** é uma plataforma de monitoramento e previsão de desast
 
 ---
 
+## 📄 Link da base de dados
+
+[Drive](https://drive.google.com/file/d/1GnpCj-pLEtxkiiwv6CGEQskzXMnnf3QZ/view?usp=sharing)
+
+
+---
+
 ## ✅ Funcionalidades Principais
 
 - **Dashboard** — Resumo de alertas ativos, IRC por estação, ranking de risco e distribuição de níveis

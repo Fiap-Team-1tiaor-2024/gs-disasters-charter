@@ -20,6 +20,10 @@
 
 [Repositório](https://github.com/Fiap-Team-1tiaor-2024/gs-disasters-charter)
 
+## Link do Drive para a base de dados
+
+[Drive](https://drive.google.com/file/d/1GnpCj-pLEtxkiiwv6CGEQskzXMnnf3QZ/view?usp=sharing)
+
 ## Link do Vídeo Demonstrativo
 
 [Vídeo](https://youtu.be/eodtobXaQhs)
