@@ -11,7 +11,7 @@
 
 ## Informações do Grupo
 
-- Grupo 28 — 1TIAOR
+- Grupo 32 — 1TIAOR
 - Curso: Inteligência Artificial
 - Instituição: FIAP
 - Global Solution 2026.06
