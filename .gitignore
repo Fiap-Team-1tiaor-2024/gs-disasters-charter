@@ -192,3 +192,17 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Disasters Charter — dados e outputs
+app/data/dataset/*.csv
+app/data/dataset/*.json
+app/data/ml/pkl/*.pkl
+app/data/ml/images/*.png
+app/data/docs/*.pdf
+!app/data/dataset/.gitkeep
+!app/data/ml/pkl/.gitkeep
+!app/data/ml/images/.gitkeep
+!app/data/docs/.gitkeep
+app/assets/imagens/
+outputs_gerados/
+outputs_ml/

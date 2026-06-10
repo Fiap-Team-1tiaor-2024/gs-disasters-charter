@@ -1,0 +1,12 @@
+streamlit
+pandas
+polars
+matplotlib
+folium
+streamlit-folium
+Pillow
+xgboost
+shap
+fpdf2
+scikit-learn
+joblib

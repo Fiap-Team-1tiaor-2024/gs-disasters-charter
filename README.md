@@ -1,163 +1,209 @@
-# Global Solution — Disasters Charter 
+# 🌦️ Disasters Charter — Global Solution 2026.06
 
-## Análise e Monitoramento de Eventos Pluviais Extremos em São Paulo: Um Sistema de Alerta Baseado em Dados e Imagens de Satélite  
+> **Monitoramento e Previsão de Desastres Naturais com IA e Dados Espaciais**
 
+A exploração espacial deixou de ser apenas científica e passou a representar uma das maiores oportunidades tecnológicas e estratégicas da atualidade. Satélites monitoram o clima, auxiliam sistemas de segurança e produzem grandes volumes de dados utilizados por governos e centros de pesquisa. Tecnologias originalmente desenvolvidas para missões espaciais impulsionaram avanços em inteligência artificial, automação e computação distribuída.
 
+O **Disasters Charter** é uma plataforma de monitoramento e previsão de desastres naturais que aplica técnicas de **inteligência artificial** sobre dados meteorológicos reais do **INMET** (Instituto Nacional de Meteorologia). O sistema integra uma pipeline de dados em tempo real, um modelo de classificação de risco via machine learning, um sensor ESP32 simulado e visualizações interativas — resolvendo problemas reais de prevenção e resposta a eventos pluviais extremos no estado de São Paulo.
 
-Integrantes do Grupo:  
-Gabriela da Cunha Rocha — RM561041  
-Gustavo Segantini Rossignolli — RM560111  
-Vitor Lopes Romão — RM559858  
-Gabrielle Halasc — RM560147  
+---
 
-Grupo 28 — 1TIAOR
-Disciplina: Global Solution 2025.1
-Curso: Inteligência Artificial
-Instituição: FIAP
-Data: 06/06/2025
+## 🎥 Vídeo Demonstrativo
 
-[Link do GitHub](https://github.com/Fiap-Team-1tiaor-2024/gs-disasters-charter)
+🔗 [_Link do vídeo será adicionado aqui_]
 
-### 1. Introdução  
-#### 1.1. Contextualização  
-Nos últimos anos, a intensificação dos eventos climáticos extremos tornou-se uma das maiores preocupações globais. Enchentes, secas prolongadas e deslizamentos de terra, impulsionados pelas mudanças climáticas, têm impactado comunidades com frequência e severidade crescentes. O estado de São Paulo, em particular, possui um histórico de desastres naturais associados a chuvas intensas, especialmente em áreas de serra e regiões litorâneas, resultando em perdas humanas e materiais significativas. Este cenário demanda respostas rápidas, inteligentes e tecnológicas para o monitoramento e mitigação de riscos. 
+---
 
-#### 1.2. Desafio da Global Solution  
-Alinhada a essa necessidade, a FIAP propôs para a Global Solution 2025.1 o desafio de desenvolver uma solução digital baseada em dados reais, capaz de prever, monitorar ou mitigar os impactos de eventos naturais extremos. A proposta incentiva a aplicação integrada de conhecimentos em lógica computacional, programação em Python e estruturação de dados, utilizando como base as informações de desastres disponibilizadas por agências globais através do site disasterscharter.org.  
+## ✅ Funcionalidades Principais
 
-#### 1.3. Problema Específico Abordado  
-Nosso grupo escolheu focar no monitoramento de chuvas intensas e na identificação de períodos de alto risco para deslizamentos e enchentes no estado de São Paulo. A escolha foi motivada pela alta relevância do problema para a nossa região e pela disponibilidade de dados abertos de alta qualidade, incluindo registros de estações meteorológicas do Instituto Nacional de Meteorologia (INMET) e imagens de satélite de desastres reais, como o trágico evento ocorrido em São Sebastião em fevereiro de 2023.  
+- **Dashboard** — Resumo de alertas ativos, IRC por estação, ranking de risco e distribuição de níveis
+- **Mapa Interativo** — Visualização georreferenciada das estações meteorológicas com legenda de risco IRC, filtros por nível e data, e popups com detalhes de cada estação
+- **Histórico** — Análise temporal de acumulados, percentis históricos dinâmicos por estação e mês, e ranking dos 10 eventos mais críticos
+- **Modelo ML** — Predição de risco com Random Forest/XGBoost, detecção de anomalias via Isolation Forest, predição antecipada 3h, gráficos de treino (matriz de confusão, ROC, SHAP) e download do relatório PDF
+- **Painel ESP32** — Integração com sensor simulado (temperatura, umidade, nível de chuva), com séries temporais em tempo real e ajuste dinâmico do IRC
+- **Pipeline Polars** — Carregamento, acumulados e cálculo de IRC em ~0,10s (13x mais rápido que Pandas puro)
+- **Treinamento Automatizado** — Script `train_ml.py` que gera modelos, gráficos e relatório PDF a partir do dataset completo
 
-#### 1.4. Objetivos do Projeto  
-O objetivo geral deste projeto foi desenvolver um sistema em Python para analisar dados históricos de precipitação, identificar períodos críticos, gerar alerta baseados em limiares configuráveis e correlacionar esses eventos com evidências visuais (imagens de satélite), culminando em uma ferramenta robusta para análise e visualização de eventos extremos.
+---
 
-Os objetivos específicos foram:  
+## 🛠️ Tecnologias Utilizadas
 
-Processar e estruturar um grande volume de dados de precipitação horária de múltiplas estações meteorológicas.
-Implementar algoritmos para calcular a precipitação acumulada em diferentes janelas de tempo (1, 3, 6, 12, 24, 48 e 72 horas), um indicador chave para o risco de desastres.
-Construir um sistema de alerta com múltiplos níveis de severidade (ATENÇÃO, ALERTA, ALERTA MÁXIMO).
-Correlacionar temporalmente os alerta gerados com imagens de satélite de desastres conhecidos.
-Desenvolver visualizações de dados eficazes, incluindo gráficos de série temporal e mapas geoespaciais interativos, para facilitar a interpretação dos resultados.
-Gerar relatórios textuais automatizados para eventos críticos específicos.
+| Categoria | Tecnologia |
+|-----------|------------|
+| Interface | Streamlit, Folium, Streamlit-Folium |
+| Processamento | Polars (pipeline), Pandas (compatibilidade) |
+| Machine Learning | Scikit-learn, XGBoost, SHAP, Isolation Forest |
+| Visualização | Matplotlib, Folium |
+| Sensor | ESP32 (simulação Wokwi), JSON |
+| Relatório | FPDF2 |
+| Linguagem | Python 3.13 |
+| Versionamento | Git |
 
-### 2. Desenvolvimento
-#### 2.1. Arquitetura da Solução
-A solução foi arquitetada como um pipeline de processamento de dados sequencial e modular, implementado em Python. Cada módulo é responsável por uma etapa específica do processo, desde a ingestão dos dados brutos até a geração dos outputs finais (relatórios e visualizações).
+---
 
-Diagrama de Fluxo Conceitual:
-![diagrama](/images/diagrama.png)
+## 📁 Estrutura do Projeto
 
-Os principais módulos são:
-Carregamento de Dados: Lê e pré-processa os dados brutos do arquivo CSV.
-Análise de Precipitação: Calcula os acumulados de chuva, enriquecendo os dados.
-Sistema de Alerta: Aplica regras de negócio (limiares) para classificar o risco.
-Gerenciamento de Imagens: Carrega dinamicamente a lista de imagens de uma pasta e extrai metadados (data).
-Geração de Outputs: Cria os relatórios, gráficos e mapas interativos.
+```
+gs-disasters-charter/
+├── PRD.md                            # Documento de requisitos
+├── README.md
+├── requirements.txt
+├── .env.example
+│
+├── esp32/                            # Simulação Wokwi (fora do app)
+│   ├── diagram.json
+│   ├── sketch.ino
+│   └── README.md
+│
+├── notebooks/
+│   └── ml_integracao_colab.py       # Referência do treinamento Colab
+│
+└── app/                              # Aplicação Streamlit
+    ├── app.py                        # Entry point
+    ├── .streamlit/config.toml        # Tema escuro customizado
+    │
+    ├── data/
+    │   ├── dataset/                  # CSV e JSON (não versionados)
+    │   │   ├── inmet_sp.csv
+    │   │   ├── inmet_sp_demo.csv
+    │   │   └── esp32_simulado.json
+    │   ├── ml/
+    │   │   ├── pkl/                  # Modelos treinados (.pkl)
+    │   │   └── images/               # Gráficos e outputs do treino
+    │   └── docs/                     # Relatório PDF gerado
+    │
+    ├── pipeline/
+    │   ├── loader.py                 # Carregamento Polars com cache
+    │   ├── accumulator.py            # Acumulados por estação (7 janelas)
+    │   ├── alerts.py                 # Percentis, scores e IRC
+    │   ├── reporter.py               # Relatórios e visualizações
+    │   └── utils.py                  # Conversão Polars → Pandas
+    │
+    ├── ml/
+    │   ├── ml_model.py               # Treinamento, SHAP, IsolationForest
+    │   ├── ml_predict.py             # Predição manual, lote e antecipada
+    │   └── model_interface.py         # Interface Streamlit ↔ modelo ML
+    │
+    ├── components/
+    │   ├── map_builder.py             # Mapa Folium com legenda IRC
+    │   ├── chart_builder.py           # Gráficos de distribuição e séries
+    │   └── sensor_reader.py           # Leitura do sensor ESP32
+    │
+    ├── pages/
+    │   ├── 1_dashboard.py
+    │   ├── 2_mapa.py
+    │   ├── 3_historico.py
+    │   ├── 4_ml.py
+    │   └── 5_esp32.py
+    │
+    └── scripts/
+        ├── train_ml.py               # Treinamento completo dos modelos
+        └── benchmark.py              # Benchmark Pipeline Polars vs Pandas
+```
 
-#### 2.2. Fontes de Dados
-Dados de Precipitação: Utilizamos um conjunto de dados do INMET contendo 4.632.374 registros de medições horárias de estações meteorológicas automáticas em São Paulo. As colunas essenciais para o projeto foram data, hora, precipitacao_total, estacao, municipio, latitude e longitude.
-Imagens de Satélite: Foram utilizadas 15 imagens de alta resolução do portal disasterscharter.org, focadas no desastre de São Sebastião em fevereiro de 2023, além de outros eventos no estado. Essas imagens serviram como “verdade em campo” para validar a eficácia do nosso sistema de alerta.
+---
 
-#### 2.3. Ferramentas e Justificativas
-A solução foi inteiramente desenvolvida em Python 3, devido à sua versatilidade e ao seu ecossistema maduro para análise de dados. As seguintes bibliotecas foram cruciais:
-Pandas: Essencial para a manipulação, limpeza e análise dos mais de 4,6 milhões de registros de chuva, permitindo cálculos eficientes de séries temporais e agregações.
-Matplotlib: Utilizada para a criação dos gráficos de série temporal, que permitem uma análise visual detalhada da evolução da chuva e dos acumulados ao longo do tempo.
-Folium: Escolhida para a geração dos mapas geoespaciais interativos, por sua facilidade de uso e pela capacidade de criar visualizações ricas (marcadores coloridos, popups com HTML, legendas) que podem ser salvas em arquivos .html autônomos.
-Pillow (PIL): Empregada para o processamento de imagens, especificamente para criar as miniaturas (thumbnails) exibidas nos popups dos mapas, otimizando o tamanho e a performance.
-Bibliotecas Padrão (OS, RE, Datetime, Unicodedata, Base64): Usadas para tarefas fundamentais como manipulação de caminhos de arquivos, extração de datas de nomes de arquivos com expressões regulares, normalização de texto e codificação de imagens para embutir no HTML.
+## ⚙️ Configuração e Instalação
 
-#### 2.4. Implementação Detalhada (Códigos e Lógica)
-O código foi estruturado em funções modulares para garantir clareza, reusabilidade e facilidade de manutenção. Apresentamos aqui a lógica dos componentes mais importantes.
+### Pré-requisitos
 
-Lógica de Geração de Alerta:
-O coração do sistema reside na função gerar_alertas_precipitacao. Após o cálculo dos acumulados de chuva para cada estação, esta função itera sobre cada registro horário e o compara com uma lista de limiares pré-definidos (MEUS_LIMIARES_DE_ALERTA).
+- Python 3.11+
+- Dataset INMET-SP (arquivo CSV)
 
-Lógica de Correlação de Imagem Relevante:
+### Instalação
 
-~~~python
-for limiar in limiares:
-           coluna_gatilho = limiar['coluna_acumulado']
-           valor_limite = limiar['valor_mm']
-           nivel = limiar['nivel_alerta']
-           msg_template = limiar['mensagem']
-           if coluna_gatilho in linha.index: # Verificar se a coluna de acumulado existe na linha
-               valor_observado = linha[coluna_gatilho]
-               if pd.notna(valor_observado) and valor_observado > valor_limite:
-                   alerta = {
-                       'timestamp': timestamp,
-                       'estacao': nome_estacao,
-                       'nivel_alerta': nivel,
-                       'descricao_alerta': msg_template,
-                       'coluna_trigger': coluna_gatilho,
-                       'valor_observado_mm': valor_observado,
-                       'limiar_mm': valor_limite
-                   }
-                   alerta.update(dados_extras_estacao)
-                   alertas_gerados.append(alerta)
-           else:
-               print(f"Aviso: Coluna de gatilho '{coluna_gatilho}' não encontrada para a estação {nome_estacao} em {timestamp}.")
-~~~~
+```bash
+# Clone o repositório
+git clone https://github.com/<usuario>/gs-disasters-charter.git
+cd gs-disasters-charter
 
-Na função plotar_mapa_alertas_dia_com_thumbnails_relevantes, implementamos uma lógica para exibir nos popups somente as imagens geograficamente relevantes para a estação em questão. Para isso, criamos um mapeamento regional (MAPEAMENTO_REGIONAL_RELEVANCIA) e uma lista de palavras-chave (PALAVRAS_CHAVE_LOCAIS_IMAGEM). 
+# Crie e ative o ambiente virtual
+python -m venv .venv
 
-A relevância é determinada por:
+# Windows
+.venv\Scripts\activate
 
-Inferência do Local da Imagem: O nome do arquivo da imagem é analisado em busca de palavras-chave que indiquem um município.
-Verificação de Relevância: Uma imagem é considerada relevante para uma estação se: 
-a. O município da imagem for o mesmo da estação. 
-b. O município da imagem estiver mapeado como “relevante” para o município da estação.
+# Linux/macOS
+source .venv/bin/activate
 
-Isso garante que o popup de uma estação em Campinas, por exemplo, não mostre uma imagem do desastre em São Sebastião.
-Fluxo de Execução Principal:
-O script é orquestrado por uma função main que executa todas as etapas em sequência, de forma dinâmica e automatizada:
+# Instale as dependências
+pip install -r requirements.txt
+```
 
-Carrega dinamicamente os nomes dos arquivos da pasta de imagens.
-Processa o CSV de chuvas e gera os alertas para todo o período.
-Identifica as datas únicas para as quais existem imagens.
-Inicia um loop por cada data de evento única, gerando automaticamente: 
-a. Relatórios textuais detalhados para cada imagem daquela data. 
-b. O mapa de alerta geoespacial para aquela data, com miniaturas relevantes. 
-c. Gráficos de série temporal para as estações que apresentaram os alertas mais significativos naquele dia. (O código-fonte completo do projeto está disponível no repositório do projeto)
+### Execução
 
-### 3. Resultados e Discussão
-A execução do sistema sobre o conjunto de dados completo do INMET e as 15 imagens de desastres fornecidas gerou resultados significativos que validam a eficácia da nossa abordagem.
+```bash
+cd app
+streamlit run app.py
+```
 
-#### 3.1. Visão Geral dos Alertas
-O sistema processou os 4,6 milhões de registros e identificou um total de 110.142 alerta ao longo de todo o período, distribuídos entre 42 estações meteorológicas únicas. Isso demonstra a capacidade da solução de analisar grandes volumes de dados e extrair eventos de interesse.
+> O comando `streamlit run app.py` deve ser executado de dentro do diretório `app/`.
 
-#### 3.2. Análise de Evento Crítico 
-Desastre de São Sebastião/Bertioga (Fevereiro de 2023)
-O foco da nossa análise de resultados foi o evento extremo que atingiu o litoral norte de São Paulo em fevereiro de 2023.
+### Dataset INMET
 
-Data do Evento: 19/02/2023
-Neste dia, o sistema registrou 144 alerta, dos quais 25 foram de Nível Máximo. A estação de Bertioga, geograficamente próxima e climaticamente similar a São Sebastião, foi o epicentro dos alertas, registrando um alarmante acumulado de chuva em 24 horas de 292,6 mm, quase o triplo do limiar de risco alto (100 mm).
+Coloque o arquivo CSV em `app/data/dataset/inmet_sp.csv` ou configure a variável de ambiente:
 
-![analise](/images/analise.png)
-Legenda da Figura 2: O gráfico ilustra a evolução da precipitação horária (barras azuis) e acumulada em 24h (linha vermelha) para a estação de Bertioga. É visível o rápido aumento do acumulado, ultrapassando os limiares de ATENÇÃO (amarelo), ALERTA (laranja) e ALERTA MÁXIMO (vermelho) durante os dias 18 e 19, coincidindo com a data da imagem de satélite do desastre.
+```bash
+export DATA_PATH=data/dataset/inmet_sp.csv   # Linux/macOS
+set DATA_PATH=data/dataset/inmet_sp.csv       # Windows
+```
 
-Data do Evento: 20/02/2023
-A situação crítica persistiu. Neste dia, foram 65 alerta, com a estação de Bertioga ainda reportando um acumulado em 24h de 156,8 mm e um acumulado em 72h de impressionantes 295,4 mm, indicando um solo completamente saturado e altíssimo risco de deslizamentos. O mapa de alerta gerado para esta data mostra claramente a concentração e a severidade dos alertas na região litorânea.
+O CSV deve conter as colunas: `data`, `hora`, `precipitacao_total`, `estacao`, `latitude`, `longitude`, `municipio`, `estado`.
 
-![mapa](/images/mapa.png)
-Legenda da Figura 3: Mapa geoespacial dos alertas gerados em 20/02/2023. O marcador vermelho sobre Bertioga indica “ALERTA MÁXIMO” O popup interativo mostra os detalhes dos alertas e a miniatura da imagem de satélite correspondente, provando a correlação direta entre os dados de chuva e a evidência visual do desastre.
+### Dataset de Demonstração
 
-A forte correlação entre os alertas de nível máximo gerados pelo sistema para a estação de Bertioga e o desastre documentado pelas imagens de São Sebastião valida a eficácia dos limiares e da metodologia empregada.
+Para executar sem o dataset completo:
 
-### 4. Conclusões
-#### 4.1. Recapitulação dos Resultados
-Este projeto resultou em um sistema funcional e automatizado capaz de processar um grande volume de dados climáticos, identificar eventos de chuva extrema com base em limiares técnicos, e correlacioná-los de forma temporal e espacial com imagens de desastres reais. A análise do caso de São Sebastião/Bertioga demonstrou com sucesso a capacidade do sistema de identificar um evento real de altíssimo impacto.
+```bash
+cd app
+export DATA_PATH=data/dataset/inmet_sp_demo.csv
+streamlit run app.py
+```
 
-#### 4.2. Atendimento aos Objetivos da Global Solution
-Consideramos que os objetivos da Global Solution foram plenamente atendidos. Desenvolvemos uma solução digital funcional, baseada em dados reais, aplicando integradamente conceito de lógica de programação (loops, condicionais), estruturação de dados (DataFrames, dicionários, listas), modularização de código (funções) e boas práticas de desenvolvimento em Python, culminando em uma ferramenta de análise com impacto potencial real.
+O demo contém 43.800 registros (5 estações, 12 meses) e carrega em ~2 segundos.
 
-#### 4.3. Limitações e Trabalhos Futuros
-A solução atual, embora robusta, possui limitações, a análise depende da densidade de estações do INMET, que pode não cobrir todas as áreas de risco. A correlação com imagens é primariamente temporal e a inferência de localidade é baseada em heurísticas sobre nomes de arquivos.
+### Sensor ESP32
 
-Como trabalhos futuros, o sistema poderia ser expandido para:
+Coloque o arquivo JSON em `app/data/dataset/esp32_simulado.json` ou configure:
 
-Integrar dados de previsão meteorológica para gerar alertas preditivos.
-Utilizar dados de relevo, tipo de solo e níveis de rios para um cálculo de risco mais sofisticado. Implementar modelos de Machine Learning para prever a probabilidade de desastres com base em múltiplos fatores. Evoluir para uma aplicação web em tempo real com um painel de monitoramento (dashboard).
+```bash
+export ESP32_DATA_PATH=data/dataset/esp32_simulado.json
+```
 
-#### 4.4. Considerações Finais
-O desenvolvimento deste projeto foi uma experiência de aprendizado imensurável, permitindo-nos aplicar conceitos teóricos em um problema prático, complexo e socialmente relevante. Acreditamos que soluções baseadas em dados como a que desenvolvemos são fundamentais para construir um futuro mais resiliente aos desafios climáticos.
+Formato esperado:
 
+```json
+[
+  {"temperatura": 28.5, "umidade": 78.2, "nivel_chuva": 2048, "timestamp": "2025-06-01T10:00:00"}
+]
+```
+
+### Treinamento do Modelo ML
+
+Para treinar os modelos a partir do dataset:
+
+```bash
+cd app
+python scripts/train_ml.py
+```
+
+Isso gera os artefatos em `app/data/`:
+
+| Artefato | Caminho |
+|----------|---------|
+| Classificador principal | `data/ml/pkl/modelo_risco_climatico.pkl` |
+| Modelo preditivo 3h | `data/ml/pkl/modelo_preditivo_3h.pkl` |
+| Detector de anomalias | `data/ml/pkl/modelo_anomalias.pkl` |
+| Gráficos de treino | `data/ml/images/*.png` |
+| Relatório PDF | `data/docs/relatorio_ml_gs2026.pdf` |
+
+> Se os modelos não forem encontrados, a página de ML opera em modo **stub** com dados de referência.
+
+---
+
+## 👨‍💻 Autores
+
+- Gabrielle Barao Halasc Frateschi - RM560147@fiap.com.br
+- Gabriela da Cunha Rocha - RM561041@fiap.com.br
+- Gustavo Segantini Rossignolli - RM560111@fiap.com.br
+- Vitor Lopes Romão - RM559858@fiap.com.br
