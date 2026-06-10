@@ -5,7 +5,7 @@ import polars as pl
 import streamlit as st
 
 
-JANELAS_PADRAO = [1, 6, 24, 72]
+JANELAS_PADRAO = [1, 3, 6, 12, 24, 48, 72]
 
 
 @st.cache_data(show_spinner="Calculando acumulados de precipitacao...")
@@ -24,11 +24,12 @@ def calculate_accumulations(
 
     Args:
         df: pl.DataFrame com colunas 'precipitacao', 'estacao' e 'timestamp'.
-        janelas_horas: Lista de tamanhos de janela em horas. Padrao: [1, 6, 24, 72].
+        janelas_horas: Lista de tamanhos de janela em horas. Padrao: [1, 3, 6, 12, 24, 48, 72].
 
     Returns:
         pl.DataFrame com colunas adicionais de acumulado
-        (precip_acc_1h, precip_acc_6h, precip_acc_24h, precip_acc_72h).
+        (precip_acc_1h, precip_acc_3h, precip_acc_6h, precip_acc_12h,
+         precip_acc_24h, precip_acc_48h, precip_acc_72h).
     """
     inicio = time.time()
 

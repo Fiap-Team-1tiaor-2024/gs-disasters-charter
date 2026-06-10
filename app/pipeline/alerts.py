@@ -21,8 +21,11 @@ PESOS_PADRAO = {"1h": 0.35, "6h": 0.30, "24h": 0.20, "72h": 0.15}
 
 JANELAS_MAP = {
     "1h": "precip_acc_1h",
+    "3h": "precip_acc_3h",
     "6h": "precip_acc_6h",
+    "12h": "precip_acc_12h",
     "24h": "precip_acc_24h",
+    "48h": "precip_acc_48h",
     "72h": "precip_acc_72h",
 }
 

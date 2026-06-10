@@ -13,7 +13,7 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp_demo.csv")
+DATA_PATH = os.environ.get("DATA_PATH", "data/dataset/inmet_sp_demo.csv")
 
 
 def run_polars_pipeline():

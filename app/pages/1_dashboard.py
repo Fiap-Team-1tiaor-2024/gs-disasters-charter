@@ -9,7 +9,7 @@ from pipeline.alerts import calculate_irc, CORES_RISCO
 from pipeline.utils import to_pandas
 from components.chart_builder import plot_risk_distribution, plot_risk_stations
 
-DATA_PATH = os.environ.get("DATA_PATH", "data/inmet_sp.csv")
+DATA_PATH = os.environ.get("DATA_PATH", "data/dataset/inmet_sp.csv")
 
 
 def _load_pipeline():
@@ -21,24 +21,24 @@ def _load_pipeline():
 
 
 st.header("🏠 Dashboard")
-st.caption("Resumo de alertas ativos, IRC por estacao e distribuicao de risco.")
+st.caption("Resumo de alertas ativos, IRC por estação e distribuição de risco.")
 
 try:
-    with st.spinner("Carregando dados meteorologicos..."):
+    with st.spinner("Carregando dados meteorológicos..."):
         df = _load_pipeline()
 
     if df.empty:
-        st.warning("O dataset esta vazio apos o preprocessamento.")
+        st.warning("O dataset está vazio após o pré-processamento.")
         st.stop()
 
-    st.success(f"Dados carregados: {len(df):,} registros | {df['estacao'].nunique() if 'estacao' in df.columns else 0} estacoes")
+    st.success(f"Dados carregados: {len(df):,} registros | {df['estacao'].nunique() if 'estacao' in df.columns else 0} estações")
 
     estacoes_unicas = df["estacao"].unique() if "estacao" in df.columns else []
 
     with st.sidebar:
         st.subheader("Filtros")
         if "estacao" in df.columns:
-            estacao_sel = st.selectbox("Estacao", options=["Todas"] + list(estacoes_unicas))
+            estacao_sel = st.selectbox("Estação", options=["Todas"] + list(estacoes_unicas))
         else:
             estacao_sel = "Todas"
 
@@ -46,7 +46,7 @@ try:
             data_min = df.index.min().date()
             data_max = df.index.max().date()
             data_sel = st.date_input(
-                "Periodo",
+                "Período",
                 value=(data_min, data_max),
                 min_value=data_min,
                 max_value=data_max,
@@ -65,7 +65,7 @@ try:
         df_filtrado = df_filtrado[mask]
 
     if df_filtrado.empty:
-        st.warning("Nenhum dado encontrado para os filtros selecionados. Tente ampliar o periodo.")
+        st.warning("Nenhum dado encontrado para os filtros selecionados. Tente ampliar o período.")
         st.stop()
 
     col1, col2, col3 = st.columns(3)
@@ -82,13 +82,13 @@ try:
     periodo_str = f"{df_filtrado.index.min().strftime('%d/%m/%Y')} a {df_filtrado.index.max().strftime('%d/%m/%Y')}" if isinstance(df_filtrado.index, pd.DatetimeIndex) and len(df_filtrado) > 0 else "N/A"
 
     with col1:
-        st.metric("Estacoes Monitoradas", value=n_estacoes_total)
+        st.metric("Estações Monitoradas", value=n_estacoes_total)
 
     with col2:
-        st.metric("Estacoes em Alerta", value=n_estacoes_risco, delta="Alto ou acima" if n_estacoes_risco > 0 else None)
+        st.metric("Estações em Alerta", value=n_estacoes_risco, delta="Alto ou acima" if n_estacoes_risco > 0 else None)
 
     with col3:
-        st.metric("Periodo dos Dados", value=periodo_str)
+        st.metric("Período dos Dados", value=periodo_str)
 
     st.divider()
 
@@ -113,9 +113,9 @@ try:
             )
 
             ranking_display = ranking.rename(columns={
-                "estacao": "Estacao",
+                "estacao": "Estação",
                 "irc": "IRC",
-                "nivel_risco": "Nivel de Risco",
+                "nivel_risco": "Nível de Risco",
                 "precip_acc_24h": "Acum. 24h (mm)",
             })
 
@@ -123,27 +123,27 @@ try:
                 cor = CORES_RISCO.get(val, "#999999")
                 return f"background-color: {cor}; color: white; font-weight: bold"
 
-            styled = ranking_display.style.map(_color_nivel, subset=["Nivel de Risco"])
+            styled = ranking_display.style.map(_color_nivel, subset=["Nível de Risco"])
             st.dataframe(styled, use_container_width=True)
 
-            st.subheader("Ranking de Risco por Estacao")
+            st.subheader("Ranking de Risco por Estação")
             fig_ranking = plot_risk_stations(ranking)
             st.pyplot(fig_ranking)
         else:
-            st.info("Nenhuma estacao com alerta alto ou acima no periodo selecionado.")
+            st.info("Nenhuma estação com alerta alto ou acima no período selecionado.")
 
     st.divider()
 
-    st.subheader("Distribuicao de Risco")
+    st.subheader("Distribuição de Risco")
     fig_dist = plot_risk_distribution(df_filtrado)
     st.pyplot(fig_dist)
 
 except FileNotFoundError:
-    st.error("Arquivo de dados nao encontrado.")
-    st.info(f"Coloque o CSV em `{DATA_PATH}` ou configure a variavel de ambiente `DATA_PATH`.")
+    st.error("Arquivo de dados não encontrado.")
+    st.info(f"Coloque o CSV em `{DATA_PATH}` ou configure a variável de ambiente `DATA_PATH`.")
 except pd.errors.EmptyDataError:
-    st.error("O arquivo CSV esta vazio ou mal formatado.")
-    st.info("Verifique se o arquivo contem dados validos.")
+    st.error("O arquivo CSV está vazio ou mal formatado.")
+    st.info("Verifique se o arquivo contém dados válidos.")
 except Exception as e:
     st.error(f"Erro inesperado ao carregar dados: {e}")
     st.info("Verifique o formato do arquivo CSV e tente novamente.")
