@@ -3,255 +3,198 @@ from typing import Any, Optional
 
 import pandas as pd
 import polars as pl
+import streamlit as st
 
 
-def load_model(model_path: str) -> Optional[Any]:
-    """Carrega um modelo de ML a partir de arquivo (joblib/pickle).
+MODELO_PADRAO = "data/ml/pkl/modelo_risco_climatico.pkl"
+ENCODER_PADRAO = "data/ml/pkl/label_encoder_risco.pkl"
+MODELO_PRED_PDR = "data/ml/pkl/modelo_preditivo_3h.pkl"
+MODELO_ANOM_PDR = "data/ml/pkl/modelo_anomalias.pkl"
 
-    Suporta modelos serializados com joblib ou pickle.
-    Retorna None se o modelo nao estiver disponivel, sem quebrar a aplicacao.
 
-    Args:
-        model_path: Caminho para o arquivo do modelo (.pkl, .joblib, .pickle).
+@st.cache_resource
+def get_model_package() -> Optional[dict]:
+    """Carrega o pacote do modelo ML com cache do Streamlit.
+
+    Wrapper de ml_predict.carregar_modelo() que retorna None
+    graciosamente quando os arquivos .pkl nao existem, em vez de
+    lancar FileNotFoundError.
 
     Returns:
-        Objeto do modelo carregado, ou None se o arquivo nao existir.
+        dict com modelo, features, metricas etc., ou None se ausente.
     """
-    if not model_path or not os.path.exists(model_path):
-        print(f"[ml] Modelo nao encontrado em: {model_path}")
-        return None
-
-    ext = os.path.splitext(model_path)[1].lower()
-
     try:
-        if ext in (".joblib", ".jl"):
-            import joblib
-            model = joblib.load(model_path)
-            print(f"[ml] Modelo carregado via joblib: {model_path}")
-            return model
-        elif ext in (".pkl", ".pickle", ".pk"):
-            import pickle
-            with open(model_path, "rb") as f:
-                model = pickle.load(f)
-            print(f"[ml] Modelo carregado via pickle: {model_path}")
-            return model
-        else:
-            print(f"[ml] Extensao nao suportada: {ext}. Tentando joblib...")
-            import joblib
-            model = joblib.load(model_path)
-            print(f"[ml] Modelo carregado via joblib (fallback): {model_path}")
-            return model
+        from ml.ml_predict import carregar_modelo
+        pacote = carregar_modelo(
+            caminho_modelo=MODELO_PADRAO,
+            caminho_encoder=ENCODER_PADRAO,
+        )
+        print(f"[ml] Modelo carregado: {pacote.get('nome_modelo', 'N/A')}")
+        return pacote
+    except FileNotFoundError:
+        print("[ml] Modelos .pkl nao encontrados — modo stub ativo")
+        return None
     except Exception as e:
         print(f"[ml] Erro ao carregar modelo: {e}")
         return None
 
 
-def _to_pandas(df):
-    """Converte pl.DataFrame ou pd.DataFrame para pd.DataFrame."""
+def preparar_df_para_ml(df) -> pd.DataFrame:
+    """Converte DataFrame do pipeline para pd.DataFrame com DatetimeIndex.
+
+    Renomeia colunas precip_acc_Nh -> prec_acum_Nh (formato esperado
+    pelo ml_model) e seta data_hora como indice, conforme exigido
+    por engenharia_de_features().
+
+    Args:
+        df: pl.DataFrame ou pd.DataFrame do pipeline com colunas de
+            acumulado e timestamp.
+
+    Returns:
+        pd.DataFrame com DatetimeIndex nomeado 'data_hora' e colunas
+        renomeadas para o formato esperado por ml_model.
+    """
+    import polars as pl
+
     if isinstance(df, pl.DataFrame):
-        if "timestamp" in df.columns:
-            return df.to_pandas().set_index("timestamp").sort_index()
-        return df.to_pandas()
-    return df
-
-
-def build_features(df, df_sensor=None):
-    """Prepara features a partir do pipeline para o modelo de ML.
-
-    Aceita pl.DataFrame ou pd.DataFrame e converte internamente para pandas,
-    pois modelos sklearn esperam pd.DataFrame como entrada.
-
-    Features geradas:
-    - Acumulados de precipitacao (1h, 6h, 24h, 72h)
-    - Scores de risco por janela (se disponiveis)
-    - Percentis do mes atual para cada janela
-    - IRC calculado (se disponivel)
-    - Dados do sensor (se disponiveis): temperatura, umidade, nivel_chuva
-
-    Args:
-        df: DataFrame (pl.DataFrame ou pd.DataFrame) com acumulados, scores e IRC.
-        df_sensor: DataFrame do sensor ESP32 (opcional).
-
-    Returns:
-        pd.DataFrame com features prontas para o modelo.
-    """
-    df_pd = _to_pandas(df)
-
-    feature_cols = []
-
-    colunas_acum = ["precip_acc_1h", "precip_acc_6h", "precip_acc_24h", "precip_acc_72h"]
-    for col in colunas_acum:
-        if col in df_pd.columns:
-            feature_cols.append(col)
-
-    score_cols = ["score_1h", "score_6h", "score_24h", "score_72h"]
-    for col in score_cols:
-        if col in df_pd.columns:
-            feature_cols.append(col)
-
-    if "irc" in df_pd.columns:
-        feature_cols.append("irc")
-
-    if "mes" in df_pd.columns:
-        feature_cols.append("mes")
-    if "hora" in df_pd.columns:
-        feature_cols.append("hora")
-
-    if "precipitacao" in df_pd.columns:
-        feature_cols.append("precipitacao")
-
-    features = df_pd[feature_cols].copy()
-
-    if df_sensor is not None and not df_sensor.empty:
-        df_sensor_pd = _to_pandas(df_sensor) if isinstance(df_sensor, pl.DataFrame) else df_sensor
-        sensor_features = {
-            "sensor_temperatura": df_sensor_pd["temperatura"].mean(),
-            "sensor_umidade": df_sensor_pd["umidade"].mean(),
-            "sensor_nivel_chuva_pct": df_sensor_pd["nivel_chuva_pct"].mean()
-            if "nivel_chuva_pct" in df_sensor_pd.columns
-            else df_sensor_pd["nivel_chuva"].mean(),
-        }
-        for col, val in sensor_features.items():
-            features[col] = val
-
-    return features
-
-
-def predict_risk(
-    model: Optional[Any],
-    features: pd.DataFrame,
-    df_original=None,
-) -> pd.DataFrame:
-    """Executa predicao de risco usando o modelo de ML.
-
-    Se o modelo nao estiver disponivel (None), retorna DataFrame com
-    aviso "Modelo nao carregado" em modo stub.
-
-    Args:
-        model: Modelo de ML carregado (ou None para stub).
-        features: DataFrame com features preparadas por build_features.
-        df_original: DataFrame original com colunas estacao e timestamp
-            para enriquecer a saida. Aceita pl.DataFrame ou pd.DataFrame.
-
-    Returns:
-        pd.DataFrame com colunas: estacao, timestamp, risco_predito, probabilidade.
-    """
-    resultado_vazio = pd.DataFrame(
-        columns=["estacao", "timestamp", "risco_predito", "probabilidade"]
-    )
-
-    if df_original is not None:
-        df_original_pd = _to_pandas(df_original)
+        pdf = df.to_pandas()
+    elif isinstance(df, pd.DataFrame):
+        pdf = df.copy()
     else:
-        df_original_pd = None
+        raise TypeError(f"Esperado pl.DataFrame ou pd.DataFrame, recebido {type(df)}")
 
-    if model is None:
-        print("[ml] Modelo nao carregado — retornando predicoes stub")
+    rename_map = {}
+    for n in [1, 3, 6, 12, 24, 48, 72]:
+        old = f"precip_acc_{n}h"
+        new = f"prec_acum_{n}h"
+        if old in pdf.columns:
+            rename_map[old] = new
 
-        if df_original_pd is not None and "irc" in df_original_pd.columns:
-            df_original_str = df_original_pd.copy()
-            df_original_str["nivel_risco"] = df_original_str["nivel_risco"].astype(str) if "nivel_risco" in df_original_str.columns else "Normal"
+    pdf = pdf.rename(columns=rename_map)
 
-            ranking = (
-                df_original_str.groupby("estacao", observed=True)
-                .agg({"irc": "max"})
-                .reset_index()
-                .sort_values("irc", ascending=False)
-                .head(20)
-            )
+    if "timestamp" in pdf.columns:
+        pdf["data_hora"] = pd.to_datetime(pdf["timestamp"])
+        pdf = pdf.set_index("data_hora")
+        pdf = pdf.sort_index()
 
-            ranking["risco_predito"] = "Modelo nao carregado"
-            ranking["probabilidade"] = float("nan")
-            ranking["timestamp"] = df_original_pd.index.max() if isinstance(df_original_pd.index, pd.DatetimeIndex) else pd.NaT
+    return pdf
 
-            return ranking[["estacao", "timestamp", "risco_predito", "probabilidade"]]
 
-        return resultado_vazio
+def run_batch_prediction(df: pl.DataFrame) -> Optional[pd.DataFrame]:
+    """Executa predicao em lote sobre o DataFrame do pipeline.
+
+    Converte o pl.DataFrame para pandas, aplica engenharia de features
+    e chama prever_lote() do ml_predict.
+
+    Args:
+        df: pl.DataFrame do pipeline com acumulados calculados.
+
+    Returns:
+        pd.DataFrame com colunas risco_ml, confianca_ml, risco_regras,
+        ou None se o modelo nao estiver disponivel.
+    """
+    pacote = get_model_package()
+    if pacote is None:
+        return None
+
+    from ml.ml_predict import prever_lote
+
+    pdf = preparar_df_para_ml(df)
 
     try:
-        predictions = model.predict(features)
-        resultado = pd.DataFrame()
-        resultado["risco_predito"] = predictions
-
-        if hasattr(model, "predict_proba"):
-            probas = model.predict_proba(features)
-            resultado["probabilidade"] = probas.max(axis=1)
-        else:
-            resultado["probabilidade"] = float("nan")
-
-        if df_original_pd is not None:
-            resultado["estacao"] = df_original_pd["estacao"].values[:len(resultado)]
-            resultado["timestamp"] = df_original_pd.index[:len(resultado)]
-        else:
-            resultado["estacao"] = "Desconhecida"
-            resultado["timestamp"] = pd.NaT
-
-        return resultado[["estacao", "timestamp", "risco_predito", "probabilidade"]]
-
+        df_predito = prever_lote(pdf)
+        print(f"[ml] Predicao em lote: {len(df_predito):,} registros")
+        return df_predito
     except Exception as e:
-        print(f"[ml] Erro ao executar predicao: {e}")
-        return resultado_vazio
+        print(f"[ml] Erro na predicao em lote: {e}")
+        return None
 
 
-def get_model_info(model: Optional[Any], model_path: str = "") -> dict:
-    """Retorna informacoes sobre o modelo carregado.
+def get_station_summary(df_predito: pd.DataFrame) -> Optional[pd.DataFrame]:
+    """Agrega predicoes por estacao para uso no mapa.
+
+    Wrapper direto de ml_predict.resumo_risco_por_estacao().
 
     Args:
-        model: Modelo de ML carregado (ou None).
-        model_path: Caminho do arquivo do modelo.
+        df_predito: DataFrame retornado por run_batch_prediction().
 
     Returns:
-        Dicionario com status, versao, tipo e metricas do modelo.
+        pd.DataFrame com resumo por estacao, ou None se erro.
     """
-    info = {
-        "carregado": model is not None,
-        "caminho": model_path,
-        "tipo": type(model).__name__ if model is not None else "N/A",
-        "versao": "N/A",
-        "metricas": {},
+    if df_predito is None or df_predito.empty:
+        return None
+
+    try:
+        from ml.ml_predict import resumo_risco_por_estacao
+        return resumo_risco_por_estacao(df_predito)
+    except Exception as e:
+        print(f"[ml] Erro ao gerar resumo: {e}")
+        return None
+
+
+def get_model_info() -> dict:
+    """Retorna informacoes sobre o modelo ML carregado.
+
+    Returns:
+        dict com carregado, nome_modelo, acuracia, f1, roc_auc, etc.
+    """
+    pacote = get_model_package()
+
+    if pacote is None:
+        return {
+            "carregado": False,
+            "caminho": MODELO_PADRAO,
+            "tipo": "N/A",
+            "status": "Modelo não carregado — modo stub ativo. Copie os .pkl para data/ml/pkl/",
+            "versao": "N/A",
+            "metricas": {},
+        }
+
+    return {
+        "carregado": True,
+        "caminho": MODELO_PADRAO,
+        "tipo": pacote.get("nome_modelo", "N/A"),
+        "status": "Modelo carregado e pronto para predição",
+        "features": pacote.get("features", []),
+        "n_features": len(pacote.get("features", [])),
+        "classes": pacote.get("ordem_classes", []),
+        "acuracia": pacote.get("acuracia"),
+        "f1": pacote.get("f1"),
+        "roc_auc": pacote.get("roc_auc"),
+        "metricas": {
+            "acuracia": pacote.get("acuracia"),
+            "f1": pacote.get("f1"),
+            "roc_auc": pacote.get("roc_auc"),
+        },
     }
 
-    if model is None:
-        info["status"] = "Modelo nao carregado — modo stub ativo"
-        return info
 
-    info["status"] = "Modelo carregado e pronto para predicao"
-
-    if hasattr(model, "classes_"):
-        info["classes"] = list(model.classes_)
-
-    if hasattr(model, "n_features_in_"):
-        info["n_features"] = model.n_features_in_
-
-    if hasattr(model, "feature_names_in_"):
-        info["feature_names"] = list(model.feature_names_in_)
-
-    return info
-
-
-def get_feature_importance(model: Optional[Any]) -> Optional[pd.DataFrame]:
-    """Extrai feature importance do modelo, se disponivel.
-
-    Args:
-        model: Modelo de ML carregado (ou None).
+def get_feature_importance() -> Optional[pd.DataFrame]:
+    """Extrai feature importance do modelo ML, se disponivel.
 
     Returns:
-        DataFrame com colunas 'feature' e 'importance' ordenado por importancia,
-        ou None se o modelo nao fornecer feature importance.
+        pd.DataFrame com colunas 'feature' e 'importance', ou None.
     """
-    if model is None:
+    pacote = get_model_package()
+    if pacote is None:
+        return None
+
+    modelo = pacote.get("modelo")
+    if modelo is None:
         return None
 
     feature_names = None
     importances = None
 
-    if hasattr(model, "feature_importances_"):
-        importances = model.feature_importances_
-    elif hasattr(model, "coef_"):
-        importances = abs(model.coef_).flatten() if model.coef_.ndim > 1 else abs(model.coef_)
+    if hasattr(modelo, "feature_importances_"):
+        importances = modelo.feature_importances_
+    elif hasattr(modelo, "coef_"):
+        importances = abs(modelo.coef_).flatten() if modelo.coef_.ndim > 1 else abs(modelo.coef_)
 
-    if hasattr(model, "feature_names_in_"):
-        feature_names = list(model.feature_names_in_)
+    if hasattr(modelo, "feature_names_in_"):
+        feature_names = list(modelo.feature_names_in_)
+    elif "features" in pacote:
+        feature_names = pacote["features"]
 
     if importances is None:
         return None
