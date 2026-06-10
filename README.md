@@ -10,7 +10,7 @@ O **Disasters Charter** é uma plataforma de monitoramento e previsão de desast
 
 ## 🎥 Vídeo Demonstrativo
 
-🔗 [_Link do vídeo será adicionado aqui_]
+🔗 [Vídeo](https://youtu.be/eodtobXaQhs)
 
 ---
 
@@ -30,14 +30,13 @@ O **Disasters Charter** é uma plataforma de monitoramento e previsão de desast
 
 | Categoria | Tecnologia |
 |-----------|------------|
-| Interface | Streamlit, Folium, Streamlit-Folium |
-| Processamento | Polars (pipeline), Pandas (compatibilidade) |
-| Machine Learning | Scikit-learn, XGBoost, SHAP, Isolation Forest |
-| Visualização | Matplotlib, Folium |
-| Sensor | ESP32 (simulação Wokwi), JSON |
-| Relatório | FPDF2 |
-| Linguagem | Python 3.13 |
-| Versionamento | Git |
+| **Interface** | Streamlit, Folium, Streamlit-Folium |
+| **Processamento** | Polars (pipeline), Pandas (compatibilidade) |
+| **Machine Learning** | Scikit-learn, XGBoost, SHAP, Isolation Forest |
+| **Visualização** | Matplotlib, Folium |
+| **Sensor** | ESP32 (simulação Wokwi), JSON |
+| **Linguagem** | Python 3.13 |
+| **Versionamento** | Git |
 
 ---
 
@@ -54,9 +53,6 @@ gs-disasters-charter/
 │   ├── diagram.json
 │   ├── sketch.ino
 │   └── README.md
-│
-├── notebooks/
-│   └── ml_integracao_colab.py       # Referência do treinamento Colab
 │
 └── app/                              # Aplicação Streamlit
     ├── app.py                        # Entry point
@@ -162,7 +158,7 @@ streamlit run app.py
 
 O demo contém 43.800 registros (5 estações, 12 meses) e carrega em ~2 segundos.
 
-### Sensor ESP32
+### 🌱 Sensor ESP32
 
 Coloque o arquivo JSON em `app/data/dataset/esp32_simulado.json` ou configure:
 
@@ -178,7 +174,7 @@ Formato esperado:
 ]
 ```
 
-### Treinamento do Modelo ML
+### 🤖 Treinamento do Modelo ML
 
 Para treinar os modelos a partir do dataset:
 
